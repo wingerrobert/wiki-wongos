@@ -90,7 +90,7 @@ export default function Game() {
             <h1 className="uppercase font-bold mb-3">Guess</h1>
             {placeholder && title && <AnswerBox onAnswer={handleAnswerSubmit} placeholder={placeholder?.split("").join("\u00A0")} answer={title} />}
             <div className="flex justify-center">
-              <a className="hover:bg-cyan-600 dark:hover:bg-black hover:text-white rounded-sm p-2 bg-cyan-300 text-black mt-10 block text-center w-1/3 select-none" onClick={onHintClick}>Hint</a>
+              <a className="hover:bg-cyan-600 dark:hover:bg-black hover:text-white rounded-sm p-2 bg-cyan-300 text-black mt-10 block text-center w-full md:w-1/2 lg:w-1/3 select-none" onClick={onHintClick}>Hint</a>
             </div>
             <h1 className="uppercase font-bold mt-10">Categories</h1>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 justify-center">
