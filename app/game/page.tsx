@@ -43,6 +43,13 @@ export default function Game() {
     setTimeout(handlePostAnswer, G.delayAfterAnswer);
   }, [isCorrect]);
 
+  useEffect(() => {
+    if (!!placeholder && !placeholder.includes('_')) {
+      setIsCorrect(true);
+      return;
+    }
+  }, [placeholder]);
+
   function handlePostAnswer() {
     if (isCorrect) {
       getNewTitle();
@@ -58,12 +65,18 @@ export default function Game() {
   }
 
   function handleAnswerSubmit(answer: string) {
-    if (getAnswerCorrectness(answer, title || "") > 0.9) {
+    if (getAnswerCorrectness(answer, title || "") > G.correctnessThreshold) {
       setIsCorrect(true);
     } else {
       setPlaceholder(makePlaceholderText(title || "", placeholder ?? "") ?? null);
       setIsCorrect(false);
     }
+  }
+
+  function onHintClick() {
+    
+
+    setPlaceholder(makePlaceholderText(title || "", placeholder ?? "") ?? null);
   }
 
   return (
@@ -76,7 +89,9 @@ export default function Game() {
 
             <h1 className="uppercase font-bold mb-3">Guess</h1>
             {placeholder && title && <AnswerBox onAnswer={handleAnswerSubmit} placeholder={placeholder?.split("").join("\u00A0")} answer={title} />}
-
+            <div className="flex justify-center">
+              <a className="hover:bg-cyan-600 dark:hover:bg-black hover:text-white rounded-sm p-2 bg-cyan-300 text-black mt-10 block text-center w-1/3 select-none" onClick={onHintClick}>Hint</a>
+            </div>
             <h1 className="uppercase font-bold mt-10">Categories</h1>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 justify-center">
               {
@@ -93,15 +108,15 @@ export default function Game() {
                 <h1 className="text-center text-5xl mb-20">_ _ _ _ _ _ _ _ _</h1>
 
                 <h1 className="uppercase font-bold mb-3">Guess</h1>
-                <AnswerBox onAnswer={()=>{}} placeholder="_ _ _ _ _ _ _ _ _" answer={""} />
+                <AnswerBox onAnswer={() => { }} placeholder="_ _ _ _ _ _ _ _ _" answer={""} />
 
                 <h1 className="uppercase font-bold mt-10">Categories</h1>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 justify-center">
-                    { 
-                      [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].map(k => { 
-                        return (<CategorySkeleton key={k} />)
-                      })
-                    }
+                  {
+                    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map(k => {
+                      return (<CategorySkeleton key={k} />)
+                    })
+                  }
                 </div>
 
               </article>
