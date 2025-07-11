@@ -17,6 +17,10 @@ export type Category =
   };
 
 
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export async function getRandomArticleTitle(): Promise<string | null> {
   let currentIteration = 0;
 
@@ -31,17 +35,15 @@ export async function getRandomArticleTitle(): Promise<string | null> {
         ...(data.featured?.articles ?? []),
       ];
 
-      console.log(allTitles.map(t => t.normalizedtitle));
-      console.log(allTitles.length);
-
       const title = allTitles[Math.floor(Math.random() * allTitles.length)]?.normalizedtitle;
       return title ?? null;
     } catch (error) {
       console.error("Failed to fetch random Wikipedia article", error);
+      await sleep(500); 
     }
   }
 
-  return null; 
+  return null;
 }
 
 export async function getCategories(title: string) {
