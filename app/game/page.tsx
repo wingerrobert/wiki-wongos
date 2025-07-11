@@ -95,7 +95,7 @@ export default function Game() {
 
   function onSkip()
   {
-    setWongoPoints(wongoPoints - 1);
+    setWongoPoints(wongoPoints - 3);
     setIsCorrect(false);
     getNewTitle();
   }
@@ -116,7 +116,7 @@ export default function Game() {
             </div>
             <div className="flex justify-center justify-items-center mt-10">
               <a className="hover:bg-cyan-600 dark:hover:bg-black hover:text-white rounded-sm p-2 bg-cyan-300 text-black block text-center w-full md:w-1/2 lg:w-1/3 select-none" onClick={onSkip}>Skip</a>
-              <span className="inline my-auto ml-5"><WongoPoint /></span><span className="inline my-auto ml-5 font-bold">x1</span>
+              <span className="inline my-auto ml-5"><WongoPoint /></span><span className="inline my-auto ml-5 font-bold">x3</span>
             </div>
             <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 justify-center">
               {
