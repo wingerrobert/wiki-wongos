@@ -1,0 +1,33 @@
+@keyframes shimmer {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 100% 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 1.5s infinite linear;
+  background: linear-gradient(
+    90deg,
+    rgba(299, 299, 299, 0) 0%,
+    rgba(299, 299, 299, 0.1) 50%,
+    rgba(299, 299, 299, 0) 100%
+  );
+  background-size: 200% 100%;
+}
+
+.animate-shimmer-text {
+  background: linear-gradient(
+    90deg,
+    rgba(299, 299, 299, 0) 0%,
+    rgba(299, 299, 299, 0.5) 50%,
+    rgba(299, 299, 299, 0) 100%
+  );
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: shimmer 1s linear infinite;
+}
