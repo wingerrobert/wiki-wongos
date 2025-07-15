@@ -115,11 +115,6 @@ export default function Game() {
     getNewTitle();
   }
 
-  function onGuess()
-  {
-    handleAnswerSubmit();
-  }
-
   function onGuessChange(newGuess: string)
   {
     setGuess(newGuess); 
@@ -135,9 +130,9 @@ export default function Game() {
             {!isCorrect && <h1 className="text-center text-5xl mb-20">{placeholder?.split("").join(' ')}</h1>}
             {isCorrect && <h1 className="text-6xl mb-20 text-center text-green-400">{title}</h1>}
 
-            {placeholder && title && <AnswerBox guess={guess} onAnswer={handleAnswerSubmit} onChange={onGuessChange} placeholder={placeholder?.split("").join("\u00A0")} answer={title} />}
+            {placeholder && title && <AnswerBox guess={guess} onAnswerAction={handleAnswerSubmit} onChangeAction={g => onGuessChange(g) } placeholder={placeholder?.split("").join("\u00A0")} answer={title} />}
             <div className="flex justify-center justify-items-center mt-10">
-              <a className="hover:bg-green-600 dark:hover:bg-black hover:text-white rounded-sm p-2 bg-cyan-300 text-black block text-center w-full md:w-1/2 lg:w-1/3 select-none" onClick={onGuess}>Guess</a>
+              <a className="hover:bg-green-600 dark:hover:bg-black hover:text-white rounded-sm p-2 bg-cyan-300 text-black block text-center w-full md:w-1/2 lg:w-1/3 select-none" onClick={handleAnswerSubmit}>Guess</a>
             </div>           
 
             <hr className="text-gray-700 mt-10" />
@@ -164,7 +159,7 @@ export default function Game() {
               <article>
                 <h1 className="text-center text-5xl mb-20 animate-shimmer-text">_ _ _ _ _ _ _ _ _</h1>
 
-                <AnswerBox onAnswer={() => { }} placeholder="_ _ _ _ _ _ _ _ _" answer={""} />
+                <AnswerBox guess={guess} onChangeAction={g => onGuessChange(g) } onAnswerAction={handleAnswerSubmit} placeholder="_ _ _ _ _ _ _ _ _" answer={""} />
 
                 <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 justify-center">
                   {
