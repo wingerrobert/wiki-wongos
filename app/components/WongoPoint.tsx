@@ -1,14 +1,6 @@
-type WongoPointProps =
+export default function WongoPoint()
 {
-  fontSize?: number,
-  coinSize?: number,
-  leftValue?: number,
-  topValue?: number
-}
-
-export default function WongoPoint({ fontSize, coinSize, leftValue, topValue }: WongoPointProps)
-{
-  return <div className={`p-${coinSize ?? 4} w-3 h-3 rounded-full border-2 outline-2 outline-cyan-900 outline-dashed border-cyan-500 text-cyan-500 flex flex-col justify-items-center justify-center`}>
-    <div className="relative font-bold" style={{ left: leftValue ?? -7.5, top: topValue ?? 2, fontSize: fontSize ?? 15 }}>W</div>
+  return <div className="w-8 h-8 rounded-full border-3 border-red-500 text-red-500 outline-2 outline-dashed flex items-center justify-center font-bold font-libertine">
+    <span className="text-white">W</span>
   </div>
 }

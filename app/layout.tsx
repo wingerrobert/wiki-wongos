@@ -2,15 +2,19 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./animation.css";
+import AppThemeProvider from "./ThemeProvider";
+import localFont from "next/font/local";
+import Script from "next/script";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+<Script
+  strategy="beforeInteractive"
+  src="https://unpkg.com/@ungap/global-this@0.4.4/min.js"
+/>
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const linuxLibertine = localFont({
+  src: "./fonts/LinLibertine_R.ttf",
+  variable: "--font-linux-libertine",
+  display: "swap"
 });
 
 export const metadata: Metadata = {
@@ -24,11 +28,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${linuxLibertine.variable} antialiased`}
       >
-        {children}
+        <AppThemeProvider>{children}</AppThemeProvider>      
       </body>
     </html>
   );

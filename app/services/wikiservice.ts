@@ -1,15 +1,16 @@
 import G from "../global";
+import { adminDb } from "../firebaseAdmin";
+import { Timestamp } from "firebase-admin/firestore";
 
 const WIKI_API = 'https://en.wikipedia.org/w/api.php';
-const FEED_API = 'https://api.wikimedia.org/feed/v1/wikipedia/en/featured';
 
 export type WikiArticle =
   {
-    titles: {
-      normalized: string;
-    };
+    pageid: string;
+    normalizedtitle: string;
     description?: string;
     timestamp?: string;
+    cachedAt: Timestamp;
   };
 export type Category =
   {
@@ -17,33 +18,31 @@ export type Category =
   };
 
 
-function sleep(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+export async function getRandomArticleTitle() {
+  let currentStoredCount = 0;
 
-export async function getRandomArticleTitle(): Promise<string | null> {
-  let currentIteration = 0;
-
-  while (currentIteration++ < G.maxLoopIterations) {
-    try {
-      const response = await fetch(`${FEED_API}/${new Date().toISOString().slice(0, 10).replaceAll('-', '/')}`);
-      const data = await response.json();
-
-      const allTitles = [
-        ...(data.tfa ? [data.tfa] : []),
-        ...(data.mostread?.articles ?? []),
-        ...(data.featured?.articles ?? []),
-      ];
-
-      const title = allTitles[Math.floor(Math.random() * allTitles.length)]?.normalizedtitle;
-      return title ?? null;
-    } catch (error) {
-      console.error("Failed to fetch random Wikipedia article", error);
-      await sleep(500); 
-    }
+  try {
+    const dbSnapshot = await adminDb.collection("articles").count().get();
+    currentStoredCount = dbSnapshot.data().count;
+  } catch (e) {
+    console.warn("Collection not found yet. Assuming empty vault.");
+    currentStoredCount = 0;
   }
 
-  return null;
+  if (currentStoredCount >= G.minimumArticles) {
+    const randomIndex = Math.floor(Math.random() * currentStoredCount);
+
+    const randomQuery = await adminDb
+      .collection("articles")
+      .offset(randomIndex)
+      .limit(1)
+      .get();
+
+    const doc = randomQuery.docs[0];
+    const articleData = doc?.data();
+
+    return articleData?.normalizedtitle ?? null;
+  }
 }
 
 export async function getCategories(title: string) {

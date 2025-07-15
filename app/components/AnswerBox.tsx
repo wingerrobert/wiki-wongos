@@ -2,21 +2,27 @@
 
 import { useState } from "react";
 
-export default function AnswerBox({ placeholder, answer, onAnswer }: { placeholder: string, answer: string, onAnswer: (answer: string) => void }) {
-  const [inputValue, setInputValue] = useState("");
+type AnswerBoxParams =
+{
+  guess: string;
+  placeholder: string;
+  answer: string;
+  onAnswer: (answer: string) => void;
+  onChange: (value: string) => void;
+}
 
+export default function AnswerBox({ guess, placeholder, answer, onAnswer, onChange }: AnswerBoxParams) {
   return <div className="text-center w-50%">
-    <input  value={inputValue}
+    <input  value={guess}
             type="text" 
             maxLength={ answer.length } 
             className="border-6 border-cyan-500 rounded-lg p-5 w-full" 
             placeholder={placeholder || ""} 
-            onChange={e => setInputValue(e.target.value)}
+            onChange={e => onChange(e.target.value)}
             onKeyDown={e => {
-              if (e.key === "Enter" && inputValue.trim())
+              if (e.key === "Enter" && guess.trim())
               {
-                onAnswer(inputValue.trim());
-                setInputValue("");
+                onAnswer(guess.trim());
               }
             }}/>
   </div>

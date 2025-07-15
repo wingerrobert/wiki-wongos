@@ -1,4 +1,5 @@
 import G from "../global"
+import { WikiArticle } from "../services/wikiservice";
 
 function getLevenshteinDistance(a: string, b: string): number {
   const m = a.length;
@@ -35,6 +36,15 @@ export function getAnswerCorrectness(answer: string, title: string)
   return Math.round(similarityScore);
 }
 
+export function isWikiArticle(obj: any): obj is WikiArticle {
+  return (
+    obj &&
+    typeof obj === 'object' &&
+    typeof obj.title === 'string' &&
+    typeof obj.normalizedtitle === 'string'
+  );
+}
+
 export function makePlaceholderText(answer: string, lastPlaceholder: string) {
   let placeholder : string[] = [];
   let currentIteration = 0;
@@ -55,6 +65,12 @@ export function makePlaceholderText(answer: string, lastPlaceholder: string) {
       }
     }
     return placeholder.join('');
+  }
+  
+  if (!answer)
+  {
+    console.error("Answer was null!");
+    return;
   }
   
   return answer.split('').map(c => {

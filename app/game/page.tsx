@@ -9,15 +9,21 @@ import CategorySkeleton from "../components/CategorySkeleton";
 import WongoPointsBar from "../components/WongoPointsBar";
 import { useRouter } from "next/navigation";
 import WongoPoint from "../components/WongoPoint";
+import WikiPointsBar from "../components/WikiPointsBar";
 
 export default function Game() {
   const router = useRouter();
 
   const [title, setTitle] = useState<string | null>(null);
   const [categories, setCategories] = useState<string | null>(null);
-  const [placeholder, setPlaceholder] = useState<string | null>(null);
+  const [placeholder, setPlaceholder] = useState<string | undefined>(undefined);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
-  const [wongoPoints, setWongoPoints] = useState<number>(100);
+
+  const [wongoPoints, setWongoPoints] = useState<number>(100); // Wongo points are like HP
+  const [wikiPoints, setWikiPoints] = useState<number>(0); // These are just normal ass points
+
+  const [guess, setGuess] = useState<string>("");
+  const [guessCount, setGuessCount] = useState<number>(0);
 
   useEffect(() => {
     (async function fetchArticle() {
@@ -77,20 +83,29 @@ export default function Game() {
     setTitle(data.title);
   }
 
-  function handleAnswerSubmit(answer: string) {
-    if (getAnswerCorrectness(answer, title || "") > G.correctnessThreshold) {
-      setWongoPoints(wongoPoints + 3);
+  function handleAnswerSubmit() {
+    if (guess === "")
+    {
+      return;
+    }
+
+    setGuessCount(guessCount + 1);
+    
+    if (getAnswerCorrectness(guess, title || "") > G.correctnessThreshold) {
+      setGuessCount(0);
+      setWongoPoints(wongoPoints + Math.max(10 - guessCount, 1));
+      setWikiPoints(wikiPoints + 1);
       setIsCorrect(true);
     } else {
       setWongoPoints(wongoPoints - 1);
-      setPlaceholder(makePlaceholderText(title || "", placeholder ?? "") ?? null);
       setIsCorrect(false);
     }
+    setGuess("");
   }
 
   function onRevealLetter() {
     setWongoPoints(wongoPoints - 1);
-    setPlaceholder(makePlaceholderText(title || "", placeholder ?? "") ?? null);
+    setPlaceholder(makePlaceholderText(title || "", placeholder ?? "") ?? undefined);
   }
 
   function onSkip()
@@ -100,16 +115,33 @@ export default function Game() {
     getNewTitle();
   }
 
+  function onGuess()
+  {
+    handleAnswerSubmit();
+  }
+
+  function onGuessChange(newGuess: string)
+  {
+    setGuess(newGuess); 
+  }
+
   return (
     <section className={`w-screen h-screen transition-colors duration-300 ${isCorrect === null ? "bg-background" : isCorrect ? "bg-green-800" : "bg-red-800"}`}>
       <div className="flex justify-center">
         <div className="flex-col justify-center mt-2 md:mt-20 w-screen md:w-2/3 p-10 md:p-0">
+          <WikiPointsBar points={wikiPoints} />
           <WongoPointsBar points={wongoPoints} />
           {!!title && (<article>
             {!isCorrect && <h1 className="text-center text-5xl mb-20">{placeholder?.split("").join(' ')}</h1>}
             {isCorrect && <h1 className="text-6xl mb-20 text-center text-green-400">{title}</h1>}
 
-            {placeholder && title && <AnswerBox onAnswer={handleAnswerSubmit} placeholder={placeholder?.split("").join("\u00A0")} answer={title} />}
+            {placeholder && title && <AnswerBox guess={guess} onAnswer={handleAnswerSubmit} onChange={onGuessChange} placeholder={placeholder?.split("").join("\u00A0")} answer={title} />}
+            <div className="flex justify-center justify-items-center mt-10">
+              <a className="hover:bg-green-600 dark:hover:bg-black hover:text-white rounded-sm p-2 bg-cyan-300 text-black block text-center w-full md:w-1/2 lg:w-1/3 select-none" onClick={onGuess}>Guess</a>
+            </div>           
+
+            <hr className="text-gray-700 mt-10" />
+
             <div className="flex justify-center justify-items-center mt-10">
               <a className="hover:bg-cyan-600 dark:hover:bg-black hover:text-white rounded-sm p-2 bg-cyan-300 text-black block text-center w-full md:w-1/2 lg:w-1/3 select-none" onClick={onRevealLetter}>Reveal Letter</a>
               <span className="inline my-auto ml-5"><WongoPoint /></span><span className="inline my-auto ml-5 font-bold">x1</span>
