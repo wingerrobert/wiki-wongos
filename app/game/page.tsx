@@ -25,6 +25,8 @@ export default function Game() {
   const [guess, setGuess] = useState<string>("");
   const [guessCount, setGuessCount] = useState<number>(0);
 
+  const [wasSkipped, setWasSkipped] = useState<boolean>(false);
+
   useEffect(() => {
     (async function fetchArticle() {
       try {
@@ -63,16 +65,21 @@ export default function Game() {
   }, [isCorrect]);
 
   useEffect(() => {
-    if (!!placeholder && !placeholder.includes('_')) {
+    setTimeout(handlePostAnswer, G.delayAfterSkip);
+  });
+
+  useEffect(() => {
+    if (!!placeholder && !wasSkipped && !placeholder.includes('_')) {
       setIsCorrect(true);
       return;
     }
   }, [placeholder]);
 
   function handlePostAnswer() {
-    if (isCorrect) {
+    if (isCorrect || wasSkipped) {
       getNewTitle();
     }
+    setWasSkipped(false);
     setIsCorrect(null);
   }
 
@@ -105,14 +112,14 @@ export default function Game() {
 
   function onRevealLetter() {
     setWongoPoints(wongoPoints - 1);
-    setPlaceholder(makePlaceholderText(title || "", placeholder ?? "") ?? undefined);
+    setPlaceholder(makePlaceholderText(title ?? "", placeholder ?? "") ?? undefined);
   }
 
   function onSkip()
   {
+    setWasSkipped(true);
+    setPlaceholder(title?.replace(/\s/g, "\u00A0"));
     setWongoPoints(wongoPoints - 3);
-    setIsCorrect(false);
-    getNewTitle();
   }
 
   function onGuessChange(newGuess: string)
@@ -121,7 +128,7 @@ export default function Game() {
   }
 
   return (
-    <section className={`w-screen h-screen transition-colors duration-300 ${isCorrect === null ? "bg-background" : isCorrect ? "bg-green-800" : "bg-red-800"}`}>
+    <section className={`w-screen h-screen transition-colors duration-300 ${wasSkipped === true ? "bg-cyan-900" : isCorrect === null ? "bg-background" : isCorrect ? "bg-green-800" : "bg-red-800"}`}>
       <div className="flex justify-center">
         <div className="flex-col justify-center mt-2 md:mt-20 w-screen md:w-2/3 p-10 md:p-0">
           <WikiPointsBar points={wikiPoints} />
