@@ -4,15 +4,16 @@ import { GameState, gameState, globalDefaults } from "../global"
 import { v4 as uuidv4 } from 'uuid';
 import { getAuth, signInAnonymously } from "firebase/auth";
 
-async function initializePlayerDocument()
-{
-  if (localStorage.getItem("playerId"))
-  {
+async function initializePlayerDocument() {
+  if (!isBrowser()) {
     return;
   }
 
-  if (!gameState.playerId)
-  {
+  if (localStorage.getItem("playerId")) {
+    return;
+  }
+
+  if (!gameState.playerId) {
     gameState.playerId = uuidv4();
   }
 
@@ -25,8 +26,11 @@ async function initializePlayerDocument()
   console.log(`stored state\n${JSON.stringify(gameState)}\nin ${stateRef.path}`);
 }
 
-export async function initializeGameState()
-{
+export async function initializeGameState() {
+  if (!isBrowser()) {
+    return;
+  }
+
   const auth = getAuth();
 
   signInAnonymously(auth)
@@ -36,16 +40,10 @@ export async function initializeGameState()
     .catch(error => {
       console.error("Sign in error", error);
     });
-  
-  if (typeof window === "undefined")
-  {
-    throw new Error("GameState cannot be created during SSR.");
-  }
 
   const stateSnap = await getStateFromPlayerId();
 
-  if (stateSnap && stateSnap.exists())
-  {
+  if (stateSnap && stateSnap.exists()) {
     const storedState = stateSnap.data() as GameState;
 
     gameState.wikis = storedState.wikis ?? globalDefaults.startingWikis;
@@ -56,25 +54,26 @@ export async function initializeGameState()
   }
 }
 
-export async function saveGameStateToFirebase()
-{
-    const stateRef = doc(db, "gamestate", gameState.playerId);
+export async function saveGameStateToFirebase() {
+  const stateRef = doc(db, "gamestate", gameState.playerId);
 
-    await setDoc(stateRef, gameState);
+  await setDoc(stateRef, gameState);
 }
 
-async function getStateFromPlayerId()
-{
+async function getStateFromPlayerId() {
+
+  if (!isBrowser()) {
+    return;
+  }
+
   let playerId = localStorage.getItem("playerId");
 
-  if (!playerId)
-  {
-    await initializePlayerDocument();  
+  if (!playerId) {
+    await initializePlayerDocument();
     playerId = localStorage.getItem("playerId");
   }
-  
-  if (!playerId)
-  {
+
+  if (!playerId) {
     throw new Error("Player ID is not set.");
   }
 
@@ -86,3 +85,7 @@ export default {
   initializeGameState,
   saveGameStateToFirebase
 };
+
+function isBrowser(): boolean {
+  return typeof window !== 'undefined' && typeof localStorage !== 'undefined';
+}
