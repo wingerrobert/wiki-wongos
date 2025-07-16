@@ -3,16 +3,16 @@ import * as wikiservice from "../../services/wikiservice"
 
 export async function GET() {
   try {
-    const title = await wikiservice.getRandomArticleTitle();
+    const article = await wikiservice.getRandomArticle();
 
-    if (!title) {
-      console.error("Error fetching article title");
-      return NextResponse.json({ title: null }, { status: 500 });
+    if (!article) {
+      console.error("Error fetching article");
+      return NextResponse.json(null, { status: 500 });
     }
 
-    return NextResponse.json({ title });
+    return NextResponse.json(article);
   } catch (error) {
-    console.error("Error fetching article title:", error);
-    return NextResponse.json({ title: null }, { status: 500 });
+    console.error("Error fetching article", error);
+    return NextResponse.json(null, { status: 500 });
   }
 }

@@ -2,14 +2,13 @@ import G from "../global";
 import { adminDb } from "../firebaseAdmin";
 import { Timestamp } from "firebase-admin/firestore";
 
-const WIKI_API = 'https://en.wikipedia.org/w/api.php';
-
 export type WikiArticle =
   {
     pageid: string;
     normalizedtitle: string;
     description?: string;
     timestamp?: string;
+    categories?: string[];
     cachedAt: Timestamp;
   };
 export type Category =
@@ -18,7 +17,7 @@ export type Category =
   };
 
 
-export async function getRandomArticleTitle() {
+export async function getRandomArticle() {
   let currentStoredCount = 0;
 
   try {
@@ -41,30 +40,6 @@ export async function getRandomArticleTitle() {
     const doc = randomQuery.docs[0];
     const articleData = doc?.data();
 
-    return articleData?.normalizedtitle ?? null;
+    return articleData ?? null;
   }
-}
-
-export async function getCategories(title: string) {
-  const params = new URLSearchParams({
-    action: 'query',
-    titles: title,
-    prop: 'categories',
-    cllimit: 'max',
-    clshow: '!hidden',
-    format: 'json',
-    origin: '*',
-  });
-  const res = await fetch(`${WIKI_API}?${params}`);
-  const data = await res.json();
-  const page = data.query?.pages?.[Object.keys(data.query.pages)[0]]?.categories ?? [];
-
-  const categories: Category[] = page
-    .filter((c: any) => {
-      const t = c.title.replace("Category:", "");
-      return !t.toLowerCase().includes(title.toLowerCase());
-    })
-    .map((c: any) => c.title.replace("Category:", ""));
-
-  return categories.length > 0 ? categories : [];
 }

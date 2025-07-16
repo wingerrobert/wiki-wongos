@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./animation.css";
 import AppThemeProvider from "./ThemeProvider";
 import localFont from "next/font/local";
 import Script from "next/script";
+import BackgroundMusic from "./components/BackgroundMusic";
 
 <Script
   strategy="beforeInteractive"
@@ -27,12 +27,17 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${linuxLibertine.variable} antialiased`}
       >
-        <AppThemeProvider>{children}</AppThemeProvider>      
+        <section className="flex justify-center">
+          <BackgroundMusic />
+        </section>        
+
+        <AppThemeProvider>{children}</AppThemeProvider>
       </body>
     </html>
   );

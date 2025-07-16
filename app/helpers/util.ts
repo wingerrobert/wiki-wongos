@@ -51,7 +51,6 @@ export function makePlaceholderText(answer: string, lastPlaceholder: string) {
   
   if (!!lastPlaceholder && typeof lastPlaceholder === "string")
   {
-    console.log(lastPlaceholder);
     placeholder = lastPlaceholder.split('');
 
     while (currentIteration++ < G.maxLoopIterations)
