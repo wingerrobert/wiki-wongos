@@ -14,6 +14,10 @@ const textSize = 45;
 const shimmerRadius = 15;
 
 export default function WikiWongosInteractiveLogo() {
+  if (typeof window === 'undefined')
+  {
+    return null;
+  }
   const [mousePosition, setMousePosition] = useState({ x: 200, y: 200 });
 
   useEffect(() => {
