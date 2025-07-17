@@ -2,7 +2,7 @@ import WikiPoint from "./WikiPoint";
 
 export default function WikiPointsBar({ points }: { points: number })
 {
-  return <article className="flex flex-wrap gap-3 mb-5">
+  return <article className="flex flex-wrap gap-3 mb-5 pointer-events-none select-none">
     <h1 className="my-auto font-libertine bold">WIKIS</h1>
     {
       !!points && points <= 5 && Array.from({ length: points }).map((_, index) => (

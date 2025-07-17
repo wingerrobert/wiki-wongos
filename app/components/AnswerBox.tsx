@@ -12,7 +12,7 @@ export default function AnswerBox({ guess, placeholder, answer, onAnswerAction, 
     <input  value={guess}
             type="text" 
             maxLength={ answer?.length ?? 10 } 
-            className="border-6 border-cyan-500 rounded-lg p-5 w-full" 
+            className="border-6 border-cyan-500 rounded-lg p-5 w-full bg-white dark:bg-black" 
             placeholder={placeholder || ""} 
             onChange={e => onChangeAction(e.target.value)}
             onKeyDown={e => {

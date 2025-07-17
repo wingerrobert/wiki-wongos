@@ -2,7 +2,7 @@ import WongoPoint from "./WongoPoint";
 
 export default function WongoPointsBar({ points }: { points: number })
 {
-  return <article className="flex flex-wrap gap-3 mb-10">
+  return <article className="flex flex-wrap gap-3 mb-10 pointer-events-none select-none">
     <h1 className="my-auto font-libertine">WONGOS</h1>
     {
       !!points && points <= 5 && Array.from({ length: points }).map((_, index) => (

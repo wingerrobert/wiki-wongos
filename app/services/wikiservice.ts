@@ -2,19 +2,27 @@ import G from "../global";
 import { adminDb } from "../firebaseAdmin";
 import { Timestamp } from "firebase-admin/firestore";
 
-export type WikiArticle =
-  {
-    pageid: string;
-    normalizedtitle: string;
-    description?: string;
-    timestamp?: string;
-    categories?: string[];
-    cachedAt: Timestamp;
-  };
-export type Category =
-  {
-    title: string;
-  };
+export type WikiArticle = {
+  pageid: string;
+  normalizedtitle: string;
+  description?: string;
+  extract?: string;
+  timestamp?: string;
+  categories?: string[];
+  originalimage?: OriginalImage;
+  views?: number;
+  cachedAt: Timestamp;
+};
+
+export type OriginalImage = {
+  height: number;
+  source: string;
+  width: number;
+}
+
+export type Category = {
+  title: string;
+};
 
 
 export async function getRandomArticle() {

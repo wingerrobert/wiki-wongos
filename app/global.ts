@@ -1,11 +1,11 @@
-export type GameState = 
-{
-  playerId: string,
-  currentArticleId: string,
-  currentPlaceholder: string,
-  wikis: number,
-  wongos: number,
-  levelsCompleted: number
+export type GameState = {
+  playerId: string;
+  currentArticleId: string;
+  currentPlaceholder: string;
+  wikis: number;
+  wongos: number;
+  levelsCompleted: number;
+  unlockedWhispers: string[];
 }
 
 export const globalDefaults = {
@@ -18,7 +18,10 @@ export const globalDefaults = {
   minimumArticles: 20,
   startingWongos: 100,
   startingWikis: 0,
-  startingVolume: 0
+  startingVolume: 0,
+  transitionDuration: 250,
+  useLevenshteinDistance: false,
+  maxPhotoHintsPerArticle: 5
 };
 
 export const gameState: GameState = {
@@ -27,7 +30,12 @@ export const gameState: GameState = {
   wikis: globalDefaults.startingWikis,
   levelsCompleted: 0,
   currentPlaceholder: "",
-  currentArticleId: ""
+  currentArticleId: "",
+  unlockedWhispers: ["whisper_reveal_letter"]
 };
+
+export const cheats = {
+  unlockAllWhispers: true
+}
 
 export default globalDefaults;

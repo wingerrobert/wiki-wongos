@@ -5,6 +5,7 @@ import AppThemeProvider from "./ThemeProvider";
 import localFont from "next/font/local";
 import Script from "next/script";
 import BackgroundMusic from "./components/BackgroundMusic";
+import SnowyParticles from "./components/SnowyParticles";
 
 <Script
   strategy="beforeInteractive"
@@ -33,6 +34,7 @@ export default function RootLayout({
       <body
         className={`${linuxLibertine.variable} antialiased`}
       >
+        <SnowyParticles  />
         <section className="flex justify-center">
           <BackgroundMusic />
         </section>        

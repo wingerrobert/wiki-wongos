@@ -5,6 +5,18 @@
   --foreground: #041723;
 }
 
+#tsparticles 
+{
+  width: 0;
+  height: 0;
+}
+
+#big-ass-container-dayum 
+{
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
