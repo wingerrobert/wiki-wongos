@@ -1,4 +1,4 @@
-import { doc, DocumentReference, getDoc, setDoc } from "firebase/firestore";
+import { doc, DocumentReference, getDoc, setDoc, waitForPendingWrites } from "firebase/firestore";
 import { db } from "../firebase";
 import { GameState, gameState, globalDefaults } from "../global";
 import { v4 as uuidv4 } from "uuid";
@@ -18,7 +18,7 @@ function getPlayerDocRef(): DocumentReference {
 }
 
 async function initializePlayerDocument() {
-  if (!isBrowser()) { 
+  if (!isBrowser()) {
     return;
   }
 
@@ -40,33 +40,44 @@ async function initializePlayerDocument() {
   console.log(`Stored state\n${JSON.stringify(gameState)}\n→ ${stateRef.path}`);
 }
 
-export async function initializeGameState() {
-  if (!isBrowser()) { 
-    return; 
+export async function initializeGameState(): Promise<boolean> {
+  if (!isBrowser()) {
+    console.log("Skipping state retrieval on server");
+    return false;
   }
 
-  await ensureAuthenticated();
+  console.log("Attemping to get player State");
 
+  await ensureAuthenticated();
+  await waitForPendingWrites(db);
+  
   const stateSnap = await getStateFromPlayerId();
 
   if (stateSnap?.exists()) {
     const stored = stateSnap.data() as GameState;
+
+    gameState.isExistingGame = stored.isExistingGame;
     gameState.wikis = stored.wikis ?? globalDefaults.startingWikis;
     gameState.wongos = stored.wongos ?? globalDefaults.startingWongos;
     gameState.currentPlaceholder = stored.currentPlaceholder ?? "";
     gameState.levelsCompleted = stored.levelsCompleted ?? 0;
     gameState.currentArticleId = stored.currentArticleId ?? "";
+
+    return true;
   }
+
+  return false;
 }
 
 export async function saveGameStateToFirebase() {
-  if (!isBrowser()) { 
-    return; 
+  if (!isBrowser()) {
+    return;
   }
 
   await ensureAuthenticated();
 
   const storedId = localStorage.getItem("playerId");
+
   if (!gameState.playerId && storedId) {
     gameState.playerId = storedId;
   }
@@ -76,8 +87,8 @@ export async function saveGameStateToFirebase() {
 }
 
 async function getStateFromPlayerId() {
-  if (!isBrowser()) { 
-    return null; 
+  if (!isBrowser()) {
+    return null;
   }
 
   await ensureAuthenticated();
@@ -103,12 +114,10 @@ export default {
   saveGameStateToFirebase,
 };
 
-async function ensureAuthenticated(): Promise<void>
-{
+async function ensureAuthenticated(): Promise<void> {
   const auth = getAuth();
 
-  if (auth.currentUser)
-  {
+  if (auth.currentUser) {
     return;
   }
 

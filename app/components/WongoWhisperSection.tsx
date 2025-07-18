@@ -14,7 +14,7 @@ const whispers = allWongoWhispers;
 export default function WongoWhisperSection({ context }: WongoWhisperSectionProps) {
   return (
     <section className="mt-5">
-      <h1 className="text-black dark:text-white">Wongo Whispers</h1>
+      <h1 className="text-black dark:text-white select-none">Wongo Whispers</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 md:gap-2 lg:gap-3 mt-10 mb-5">
         {
           whispers && whispers

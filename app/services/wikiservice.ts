@@ -35,6 +35,8 @@ export async function getRandomArticle() {
     console.warn("Collection not found yet. Assuming empty vault.");
     currentStoredCount = 0;
   }
+  
+  console.log("Current db records: ", currentStoredCount);
 
   if (currentStoredCount >= G.minimumArticles) {
     const randomIndex = Math.floor(Math.random() * currentStoredCount);

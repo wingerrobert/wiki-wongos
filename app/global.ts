@@ -6,6 +6,7 @@ export type GameState = {
   wongos: number;
   levelsCompleted: number;
   unlockedWhispers: string[];
+  isExistingGame: boolean;
 }
 
 export const globalDefaults = {
@@ -21,7 +22,9 @@ export const globalDefaults = {
   startingVolume: 0,
   transitionDuration: 250,
   useLevenshteinDistance: false,
-  maxPhotoHintsPerArticle: 5
+  maxPhotoHintsPerArticle: 5,
+  levelsBeforeStore: 5,
+  startingWongoWhispers: ["whisper_reveal_letter"]
 };
 
 export const gameState: GameState = {
@@ -31,11 +34,12 @@ export const gameState: GameState = {
   levelsCompleted: 0,
   currentPlaceholder: "",
   currentArticleId: "",
-  unlockedWhispers: ["whisper_reveal_letter"]
+  unlockedWhispers: globalDefaults.startingWongoWhispers,
+  isExistingGame: false
 };
 
 export const cheats = {
-  unlockAllWhispers: true
+  unlockAllWhispers: false
 }
 
 export default globalDefaults;

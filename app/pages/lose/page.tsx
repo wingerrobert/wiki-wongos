@@ -10,7 +10,7 @@ export default function Lose() {
           <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
             <h1 className="text-2xl uppercase bold text-white">You Lose</h1>
             <Link href="game" className="py-3 px-3 w-full bg-white text-black text-center rounded-4xl">
-              <span className="text-xl uppercase bold">Try Again</span>
+              <span className="text-xl uppercase bold select-none">Try Again</span>
             </Link>
           </main>
         </div>

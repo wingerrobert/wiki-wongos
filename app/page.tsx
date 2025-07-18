@@ -10,11 +10,15 @@ export default function Home() {
 
   useEffect(() => {
     setIsClient(true);
-    gameStateService.initializeGameState();
+
+    const init = async () => {
+      await gameStateService.initializeGameState();
+    };
+
+    init();
   }, []);
-  
-  if (!isClient)
-  {
+
+  if (!isClient) {
     return <div style={{ width: "100%", height: "100%" }} />;
   }
 
@@ -25,7 +29,7 @@ export default function Home() {
         <h1 className="text-5xl uppercase bold font-libertine text-center">Wiki Wongos</h1>
         <Link href="/pages/game" className="py-3 px-3 w-full bg-white text-black text-center rounded-4xl">
           <span className="text-xl uppercase bold">Play</span>
-        </Link>        
+        </Link>
       </main>
     </div>
   );
