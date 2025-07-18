@@ -14,7 +14,7 @@ export type WongoWhisper = {
 }
 
 export type WongoWhisperContext = {
-  isTransitioning: bool;
+  isTransitioning: boolean;
   articleTitle: string;
   placeholder: string;
   wongoPoints: number;
