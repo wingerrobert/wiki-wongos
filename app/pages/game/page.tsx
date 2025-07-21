@@ -14,6 +14,7 @@ import WongoWhisperSection from "@/app/components/WongoWhisperSection";
 import ArticleSkeleton from "@/app/components/ArticleSkeleton";
 import PictureBar from "@/app/components/PictureBar";
 import soundManager from "@/app/managers/soundManager";
+import FadeTransition from "@/app/components/FadeTransition";
 
 export default function Game() {
   const router = useRouter();
@@ -35,51 +36,48 @@ export default function Game() {
 
   const [purchasedPhoto, setPurchasedPhoto] = useState(false);
 
+  const [whisperCounts, setWhisperCounts] = useState<Record<string, number>>(globalDefaults.startingWongoWhispers);
+  const [whispersUsed, setWhispersUsed] = useState(0);
+
   const hasInitialized = useRef(false);
 
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(true);
+
 
   useEffect(() => {
-    (async function initGame() {
-      console.log("INITIALIZING");
-      if (hasInitialized.current) {
-        return;
-      }
-      hasInitialized.current = true;
+    if (hasInitialized.current) {
+      return;
+    }
+
+    hasInitialized.current = true;
+
+    (async () => {
       try {
-        const init = async () => {
-          await gameStateService.initializeGameState();
-        };
+        await gameStateService.updateGameStateFromStorage();
 
-        await init();
+        const isNewGame = !gameState.isExistingGame || !gameState.currentArticleId;
 
-        console.log("Is Existing Game: ", gameState.isExistingGame);
-
-        if (!gameState.isExistingGame || !gameState.currentArticleId) {
+        if (isNewGame) {
           gameState.isExistingGame = true;
           await retrieveAndUpdateRandomArticle();
           return;
         }
 
-        await retrieveAndUpdateArticleById(gameState.currentArticleId);
-
-        if (!!gameState.levelsCompleted) {
-          setLevelsCompleted(gameState.levelsCompleted);
+        if (!gameState.currentArticleId) {
+          await retrieveAndUpdateRandomArticle();
+        } else {
+          await retrieveAndUpdateArticleById(gameState.currentArticleId);
         }
 
-        if (!!gameState.currentPlaceholder) {
-          setPlaceholder(gameState.currentPlaceholder);
-        }
+        // Sync gameState with React state
+        setWhisperCounts(gameState.whispers ?? {});
+        setLevelsCompleted(gameState.levelsCompleted ?? []);
+        setPlaceholder(gameState.currentPlaceholder ?? "");
+        setWongoPoints(gameState.wongos ?? globalDefaults.startingWongos);
+        setWikiPoints(gameState.wikis ?? 0);
 
-        if (gameState.wongos !== globalDefaults.startingWongos) {
-          setWongoPoints(gameState.wongos);
-        }
-
-        if (!!gameState.wikis) {
-          setWikiPoints(gameState.wikis);
-        }
       } catch (error) {
-        console.error('Failed to fetch article: ', error);
+        console.error("Failed to initialize game:", error);
       }
     })();
   }, []);
@@ -87,6 +85,7 @@ export default function Game() {
   useEffect(() => {
     if (article?.normalizedtitle) {
       const newPlaceholder = makePlaceholderText(article.normalizedtitle, "");
+      setIsTransitioning(false);
       setPlaceholder(newPlaceholder);
     }
   }, [article]);
@@ -96,7 +95,7 @@ export default function Game() {
       gameState.levelsCompleted == 0;
       gameState.wikis = globalDefaults.startingWikis;
       gameState.wongos = 0;
-      gameState.unlockedWhispers = globalDefaults.startingWongoWhispers;
+      gameState.whispers = globalDefaults.startingWongoWhispers;
       gameState.currentPlaceholder = "";
       gameState.currentArticleId = "";
       gameState.isExistingGame = false;
@@ -110,7 +109,8 @@ export default function Game() {
   useEffect(() => {
     if (isCorrect) {
       soundManager.playSound("win");
-      setIsTransitioning(true);
+
+      setTimeout(() => { setIsTransitioning(true); }, G.delayAfterAnswer * 0.6);
       setTimeout(handlePostAnswer, G.delayAfterAnswer);
     } else if (isCorrect === false) // looks dumb but isCorrect can be null
     {
@@ -121,7 +121,7 @@ export default function Game() {
 
   useEffect(() => {
     if (wasSkipped) {
-      setIsTransitioning(true);
+      setTimeout(() => { setIsTransitioning(true); }, G.delayAfterSkip * 0.5);
       setTimeout(handlePostAnswer, G.delayAfterSkip);
     }
   }, [wasSkipped]);
@@ -129,28 +129,34 @@ export default function Game() {
   async function handlePostAnswer() {
     saveGame();
 
-    if (levelsCompleted !== 0 && levelsCompleted % 5 === 0)
-    {
+    setPlaceholder("");
+    setIsCorrect(null);
+
+    if ((levelsCompleted + 1) !== 0 && (levelsCompleted + 1) % 5 === 0) {
       router.push("/pages/shop");
       return;
     }
 
-    setIsTransitioning(false);
-
-    setPlaceholder("");
-    setIsCorrect(null);
+    await fetch(`/api/updateArticleDifficulty/${article?.pageid}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        articleGuesses: guessCount,
+        whispersUsed: whispersUsed
+      })
+    });
 
     const response = await fetch('/api/randomArticle');
-    const article: WikiArticle = await response.json();
+    const nextArticle: WikiArticle = await response.json();
 
-    chooseNextArticleWithBuffer(article);
+    chooseNextArticleWithBuffer(nextArticle);
   }
 
   async function retrieveAndUpdateRandomArticle() {
     const response = await fetch('/api/randomArticle');
-    const article: WikiArticle = await response.json() as WikiArticle;
+    const nextArticle: WikiArticle = await response.json() as WikiArticle;
 
-    chooseNextArticleWithBuffer(article);
+    chooseNextArticleWithBuffer(nextArticle);
   }
 
   async function retrieveAndUpdateArticleById(articleId: string) {
@@ -158,14 +164,14 @@ export default function Game() {
       console.error("Article ID was empty!");
       return;
     }
-    console.log("fetching article with ID: ", articleId);
+
     const response = await fetch(`/api/article/${articleId}`);
     const article: WikiArticle = await response.json() as WikiArticle;
     chooseNextArticleWithBuffer(article);
   }
 
   function handleAnswerSubmit() {
-    if (guess === "") {
+    if (guess === "" || isCorrect) {
       return;
     }
 
@@ -174,7 +180,7 @@ export default function Game() {
     if (getAnswerCorrect(guess, article?.normalizedtitle || "")) {
       setLevelsCompleted(levelsCompleted + 1);
       setWongoPoints(wongoPoints + Math.max(10 - guessCount, 1));
-      setWikiPoints(wikiPoints + 1);
+      setWikiPoints(wikiPoints + globalDefaults.wikiPointsPerArticle);
       setIsCorrect(true);
     } else {
       setWongoPoints(wongoPoints - 3);
@@ -185,6 +191,7 @@ export default function Game() {
   }
 
   function onGuessChange(newGuess: string) {
+    soundManager.playSound('hover');
     setGuess(newGuess);
   }
 
@@ -211,9 +218,9 @@ export default function Game() {
       <section className={`fixed top-0 left-0 w-screen h-full -z-10 pb-5 pointer-events-none transition-colors duration-300 ${wasSkipped === true ? "bg-cyan-900" : isCorrect === null ? "bg-transparent" : isCorrect ? "bg-green-800" : "bg-red-800"}`}>
       </section>
       <div className="flex justify-center">
-        <h1 className="text-black dark:text-white text-bold text-2xl">Level {levelsCompleted + 1}</h1>
-        <div className="flex-col justify-center mt-2 md:mt-20 w-screen md:w-2/3 p-10 md:p-0">
-
+        <div className="flex-col justify-center mt-2 w-screen md:w-2/3 p-10 md:p-0">
+          <h1 className="text-black dark:text-white text-bold text-2xl mb-5">Level {levelsCompleted + 1}</h1>
+          <FadeTransition isTransitioning={!isTransitioning} />
           <PictureBar src={article?.originalimage?.source} purchased={purchasedPhoto} />
           <WikiPointsBar points={wikiPoints} />
           <WongoPointsBar points={wongoPoints} />
@@ -236,9 +243,7 @@ export default function Game() {
                 )
               }
 
-              {
-                <AnswerBox guess={guess} onAnswerAction={handleAnswerSubmit} onChangeAction={g => onGuessChange(g)} placeholder={placeholder?.split("").join(" ")} answer={article?.normalizedtitle} />
-              }
+              <AnswerBox guess={guess} onAnswerAction={handleAnswerSubmit} onChangeAction={g => onGuessChange(g)} placeholder={placeholder?.split("").join(" ")} answer={article?.normalizedtitle} />
 
               <div className="flex justify-center justify-items-center mt-10">
                 <a className="hover:bg-green-600 dark:hover:bg-green-950 hover:text-white rounded-sm p-2 bg-green-300 text-black block text-center w-full md:w-1/2 lg:w-1/3 select-none hover:cursor-pointer" onClick={() => { handleAnswerSubmit(); soundManager.playSound('click'); }} onMouseEnter={() => { soundManager.playSound('hover') }}>Guess</a>
@@ -257,8 +262,14 @@ export default function Game() {
                 setWasSkippedAction: setWasSkipped,
                 setLevelsCompletedAction: setLevelsCompleted,
                 levelsCompleted: levelsCompleted,
+                wasSkipped: wasSkipped,
                 purchasedPhoto: purchasedPhoto,
                 setPurchasedPhoto: setPurchasedPhoto,
+                whisperCounts: whisperCounts,
+                whispersUsed: whispersUsed,
+                setWhispersUsedAction: setWhispersUsed,
+                setWhisperCountsAction: setWhisperCounts,
+                isCorrect: isCorrect ?? false,
                 hasPhoto: !!article?.originalimage
               }} />
 
@@ -275,7 +286,7 @@ export default function Game() {
             </article>)
           }
           {
-            (!article || !article?.normalizedtitle) && (
+            isTransitioning && (
               <ArticleSkeleton />
             )
           }

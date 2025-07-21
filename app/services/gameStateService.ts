@@ -1,6 +1,6 @@
 import { doc, DocumentReference, getDoc, setDoc, waitForPendingWrites } from "firebase/firestore";
 import { db } from "../firebase";
-import { GameState, gameState, globalDefaults } from "../global";
+import { GameState, gameState, globalDefaults, setGameState } from "../global";
 import { v4 as uuidv4 } from "uuid";
 import { getAuth, signInAnonymously } from "firebase/auth";
 
@@ -36,17 +36,12 @@ async function initializePlayerDocument() {
 
   const stateRef = getPlayerDocRef();
   await setDoc(stateRef, gameState);
-
-  console.log(`Stored state\n${JSON.stringify(gameState)}\n→ ${stateRef.path}`);
 }
 
-export async function initializeGameState(): Promise<boolean> {
+export async function updateGameStateFromStorage(): Promise<boolean> {
   if (!isBrowser()) {
-    console.log("Skipping state retrieval on server");
     return false;
   }
-
-  console.log("Attemping to get player State");
 
   await ensureAuthenticated();
   await waitForPendingWrites(db);
@@ -54,15 +49,8 @@ export async function initializeGameState(): Promise<boolean> {
   const stateSnap = await getStateFromPlayerId();
 
   if (stateSnap?.exists()) {
-    const stored = stateSnap.data() as GameState;
-
-    gameState.isExistingGame = stored.isExistingGame;
-    gameState.wikis = stored.wikis ?? globalDefaults.startingWikis;
-    gameState.wongos = stored.wongos ?? globalDefaults.startingWongos;
-    gameState.currentPlaceholder = stored.currentPlaceholder ?? "";
-    gameState.levelsCompleted = stored.levelsCompleted ?? 0;
-    gameState.currentArticleId = stored.currentArticleId ?? "";
-
+    const storedGameState = stateSnap.data() as GameState;
+    setGameState(storedGameState);
     return true;
   }
 
@@ -110,7 +98,7 @@ async function getStateFromPlayerId() {
 }
 
 export default {
-  initializeGameState,
+  updateGameStateFromStorage,
   saveGameStateToFirebase,
 };
 
@@ -122,6 +110,5 @@ async function ensureAuthenticated(): Promise<void> {
   }
 
   await signInAnonymously(auth)
-    .then(() => console.log("Signed in anonymously"))
     .catch((err) => console.error("Sign-in error:", err));
 }

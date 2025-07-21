@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { FaMusic } from "react-icons/fa6";
-import globalDefaults from "../global";
+import globalDefaults, { gameState } from "../global";
 
 const ReactHowler = require("react-howler") as any;
 const BG_MUSIC_PATH = "/audio/bg-music.wav";
@@ -12,6 +12,7 @@ export default function BackgroundMusic() {
   const [volume, setVolume] = useState<number>(globalDefaults.startingVolume);
 
   function handleVolumeChange(value: number) {
+    gameState.volume = volume;
     setVolume(value);
   }
 

@@ -76,8 +76,6 @@ export function revealWordInPlaceholder(answer: string, lastPlaceholder?: string
   const answerWords = answer.trim().split(" ");
   const placeholderWords = (lastPlaceholder?.trim() ?? makePlaceholderText(answer, "") ?? "").split(" ");
 
-  console.log("last place holder words", placeholderWords);
-
   let wordIndex = -1;
 
   // Find a word that still contains underscores

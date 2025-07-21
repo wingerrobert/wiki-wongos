@@ -4,22 +4,34 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import gameStateService from "./services/gameStateService"
 import WikiWongosInteractiveLogo from "./components/WikiWongosInteractiveLogo";
+import { gameState, initialGameState, setGameState } from "./global";
 
 export default function Home() {
   const [isClient, setIsClient] = useState(false);
+  const [isExisting, setIsExisting] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
 
     const init = async () => {
-      await gameStateService.initializeGameState();
+      await gameStateService.updateGameStateFromStorage();
+      setIsExisting(gameState.isExistingGame);
     };
 
     init();
   }, []);
 
+  useEffect(() => {
+    setIsExisting(gameState.isExistingGame);
+  }, [gameState.isExistingGame]);
+
   if (!isClient) {
     return <div style={{ width: "100%", height: "100%" }} />;
+  }
+
+  function startNewGame()
+  {
+    setGameState(initialGameState);
   }
 
   return (
@@ -27,9 +39,27 @@ export default function Home() {
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
         <WikiWongosInteractiveLogo />
         <h1 className="text-5xl uppercase bold font-libertine text-center">Wiki Wongos</h1>
-        <Link href="/pages/game" className="py-3 px-3 w-full bg-white text-black text-center rounded-4xl">
-          <span className="text-xl uppercase bold">Play</span>
-        </Link>
+
+        {
+          isExisting && (
+            <section className="flex flex-col w-full">
+              <Link href="/pages/game" className="flex py-3 px-3 w-full bg-white text-black text-center rounded-4xl mb-5">
+                <span className="text-xl uppercase bold w-full">Continue</span>
+              </Link>
+              <a className="flex py-3 px-3 w-full text-black text-center rounded-4xl bg-red-500" onClick={startNewGame}>
+                <span className="text-xl uppercase bold w-full text-white">New Game</span>
+              </a>            
+            </section>
+          )
+        }
+
+        {
+          !isExisting && (
+            <Link href="/pages/game" className="py-3 px-3 w-full bg-white text-black text-center rounded-4xl">
+              <span className="text-xl uppercase bold">Play</span>
+            </Link>
+          )
+        }
       </main>
     </div>
   );

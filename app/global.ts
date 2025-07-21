@@ -4,42 +4,55 @@ export type GameState = {
   currentPlaceholder: string;
   wikis: number;
   wongos: number;
-  levelsCompleted: number;
-  unlockedWhispers: string[];
+  levelsCompleted: number | null;
+  whispers: Record<string, number>;
   isExistingGame: boolean;
+  volume: number;
 }
 
 export const globalDefaults = {
   maxLoopIterations: 2000,
-  delayAfterAnswer: 1000,
-  delayAfterSkip: 2000,
+  delayAfterAnswer: 2000,
+  delayAfterSkip: 2500,
   correctnessThreshold: 0.999,
   articleDaysToGrab: 10,
   firebaseArticleStorageCap: 5000,
   minimumArticles: 20,
   startingWongos: 100,
   startingWikis: 0,
+  wikiPointsPerArticle: 3,
   startingVolume: 0,
-  transitionDuration: 250,
+  transitionDuration: 500,
   useLevenshteinDistance: false,
   maxPhotoHintsPerArticle: 5,
   levelsBeforeStore: 5,
-  startingWongoWhispers: ["whisper_reveal_letter"]
+  startingWongoWhispers: {
+    "whisper_reveal_letter": 50,
+  }
 };
 
-export const gameState: GameState = {
+export const initialGameState: GameState = {
+  volume: 0,
   playerId: "",
   wongos: globalDefaults.startingWongos,
   wikis: globalDefaults.startingWikis,
-  levelsCompleted: 0,
+  levelsCompleted: null,
   currentPlaceholder: "",
   currentArticleId: "",
-  unlockedWhispers: globalDefaults.startingWongoWhispers,
+  whispers: globalDefaults.startingWongoWhispers,
   isExistingGame: false
 };
 
+export let gameState: GameState = initialGameState; 
+
+export function setGameState(newState: GameState)
+{
+  gameState = newState;
+}
+
 export const cheats = {
-  unlockAllWhispers: false
+  unlockAllWhispers: false,
+  freeWhispers: true
 }
 
 export default globalDefaults;

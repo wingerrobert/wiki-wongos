@@ -1,20 +1,22 @@
 import { Howl } from 'howler';
+import { gameState } from '../global';
 
 class SoundManager {
   private sounds: Record<string, Howl>;
 
   constructor() {
     this.sounds = {
-      click: new Howl({ src: ['/audio/clickSound.wav'], volume: 0.7 }),
-      hover: new Howl({ src: ['/audio/hoverSound.wav'], volume: 0.5 }),
-      win:   new Howl({ src: ['/audio/winSound.wav'], volume: 1.0 }),
-      lose:  new Howl({ src: ['/audio/loseSound.wav'], volume: 0.9 }),
+      click: new Howl({ src: ['/audio/clickSound.wav'] }),
+      hover: new Howl({ src: ['/audio/hoverSound.wav'] }),
+      win:   new Howl({ src: ['/audio/winSound.wav'] }),
+      lose:  new Howl({ src: ['/audio/loseSound.wav'] }),
     };
   }
 
   playSound(name: string) {
     const sound = this.sounds[name];
     if (sound) {
+      sound.volume(gameState.volume);
       sound.play();
     } else {
       console.warn(`Sound "${name}" not found.`);
@@ -36,5 +38,6 @@ class SoundManager {
   }
 }
 
-const soundManager = new SoundManager();
+const soundManager = new SoundManager(gameState.volume);
+
 export default soundManager;
