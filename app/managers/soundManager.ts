@@ -38,6 +38,6 @@ class SoundManager {
   }
 }
 
-const soundManager = new SoundManager(gameState.volume);
+const soundManager = new SoundManager();
 
 export default soundManager;
