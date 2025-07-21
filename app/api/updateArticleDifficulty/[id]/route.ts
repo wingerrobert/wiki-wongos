@@ -1,16 +1,14 @@
-import { adminDb } from "@/app/firebaseAdmin";
-import { updateArticleDifficulty } from "@/app/services/wikiservice";
-import { NextResponse } from "next/server";
+import { updateArticleDifficulty } from '@/app/services/wikiservice';
+import { adminDb } from '@/app/firebaseAdmin';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(
-  request: Request,
-  context: { params: { id: string } }
-) {
-  const { id } = context.params;
-  const body = await request.json();
-  const { articleGuesses, whispersUsed } = body;
+export async function POST(request: NextRequest) {
+  const url = new URL(request.url);
+  const id = url.pathname.split('/').pop(); // gets the last segment from the route
 
-  if (typeof articleGuesses !== 'number' || typeof whispersUsed !== 'number') {
+  const { articleGuesses, whispersUsed } = await request.json();
+
+  if (!id || typeof articleGuesses !== 'number' || typeof whispersUsed !== 'number') {
     return NextResponse.json({ error: 'Missing or invalid parameters' }, { status: 400 });
   }
 
