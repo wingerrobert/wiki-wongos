@@ -71,7 +71,7 @@ export default function Game() {
 
         // Sync gameState with React state
         setWhisperCounts(gameState.whispers ?? {});
-        setLevelsCompleted(gameState.levelsCompleted ?? []);
+        setLevelsCompleted(gameState.levelsCompleted ?? 0);
         setPlaceholder(gameState.currentPlaceholder ?? "");
         setWongoPoints(gameState.wongos ?? globalDefaults.startingWongos);
         setWikiPoints(gameState.wikis ?? 0);
