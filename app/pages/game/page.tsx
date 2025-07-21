@@ -4,7 +4,7 @@ import G, { gameState, globalDefaults } from "../../global";
 import { useEffect, useRef, useState } from 'react';
 import CategoryTag from '../../components/CategoryTag';
 import AnswerBox from '../../components/AnswerBox';
-import { makePlaceholderText, getChoppedPlaceholder, getAnswerCorrect } from '../../helpers/util';
+import { makePlaceholderText, getChoppedPlaceholder, getAnswerCorrect, getChoppedGuess } from '../../helpers/util';
 import WongoPointsBar from "../../components/WongoPointsBar";
 import { useRouter } from "next/navigation";
 import WikiPointsBar from "../../components/WikiPointsBar";
@@ -15,6 +15,10 @@ import ArticleSkeleton from "@/app/components/ArticleSkeleton";
 import PictureBar from "@/app/components/PictureBar";
 import soundManager from "@/app/managers/soundManager";
 import FadeTransition from "@/app/components/FadeTransition";
+import ExtractBar from "@/app/components/ExtractBar";
+import Link from "next/link";
+import { FaHome } from "react-icons/fa";
+import GoogleSearchUI from "@/app/components/GoogleSearchUI";
 
 export default function Game() {
   const router = useRouter();
@@ -34,14 +38,19 @@ export default function Game() {
 
   const [levelsCompleted, setLevelsCompleted] = useState(0);
 
+  const [isGoogling, setIsGoogling] = useState(false);
+
   const [purchasedPhoto, setPurchasedPhoto] = useState(false);
+  const [purchasedExtract, setPurchasedExtract] = useState(false);
 
   const [whisperCounts, setWhisperCounts] = useState<Record<string, number>>(globalDefaults.startingWongoWhispers);
-  const [whispersUsed, setWhispersUsed] = useState(0);
+  const [whispersUsed, setWhispersUsed] = useState(0); // Just a note, this isn't 1 -> 1 accurate as some whispers are weighted heavier in this count.
 
   const hasInitialized = useRef(false);
 
   const [isTransitioning, setIsTransitioning] = useState(true);
+
+  const [isHighlighting, setIsHighlighting] = useState(false);
 
 
   useEffect(() => {
@@ -53,8 +62,11 @@ export default function Game() {
 
     (async () => {
       try {
-        await gameStateService.updateGameStateFromStorage();
-
+        if (!gameState.forceNewGame) {
+          await gameStateService.updateGameStateFromStorage();
+        }
+        
+        gameState.forceNewGame = false;
         const isNewGame = !gameState.isExistingGame || !gameState.currentArticleId;
 
         if (isNewGame) {
@@ -84,6 +96,14 @@ export default function Game() {
 
   useEffect(() => {
     if (article?.normalizedtitle) {
+
+      if (!!gameState && !gameState.previousArticleIds)
+      {
+        gameState.previousArticleIds = [];
+      }
+
+      gameState?.previousArticleIds?.push(article.pageid);
+      setWhispersUsed(0);
       const newPlaceholder = makePlaceholderText(article.normalizedtitle, "");
       setIsTransitioning(false);
       setPlaceholder(newPlaceholder);
@@ -92,6 +112,8 @@ export default function Game() {
 
   useEffect(() => {
     if (wongoPoints <= 0) {
+      setPlaceholder(article?.normalizedtitle);
+
       gameState.levelsCompleted == 0;
       gameState.wikis = globalDefaults.startingWikis;
       gameState.wongos = 0;
@@ -102,7 +124,7 @@ export default function Game() {
 
       saveGame();
 
-      router.push("/pages/lose");
+      setTimeout(() => { router.push("/pages/lose"); }, G.delayAfterSkip);
     }
   }, [wongoPoints]);
 
@@ -129,13 +151,12 @@ export default function Game() {
   async function handlePostAnswer() {
     saveGame();
 
+    if ((levelsCompleted + 1) !== 0 && (levelsCompleted + 1) % 5 === 0) {
+      setTimeout(() => { router.push("/pages/shop"); }, 500);
+    }
+
     setPlaceholder("");
     setIsCorrect(null);
-
-    if ((levelsCompleted + 1) !== 0 && (levelsCompleted + 1) % 5 === 0) {
-      router.push("/pages/shop");
-      return;
-    }
 
     await fetch(`/api/updateArticleDifficulty/${article?.pageid}`, {
       method: "POST",
@@ -179,11 +200,11 @@ export default function Game() {
 
     if (getAnswerCorrect(guess, article?.normalizedtitle || "")) {
       setLevelsCompleted(levelsCompleted + 1);
-      setWongoPoints(wongoPoints + Math.max(10 - guessCount, 1));
+      setWongoPoints(wongoPoints + globalDefaults.wongoPointsPerArticle);
       setWikiPoints(wikiPoints + globalDefaults.wikiPointsPerArticle);
       setIsCorrect(true);
     } else {
-      setWongoPoints(wongoPoints - 3);
+      setWongoPoints(wongoPoints - 1);
       setIsCorrect(false);
     }
 
@@ -197,10 +218,35 @@ export default function Game() {
 
   function chooseNextArticleWithBuffer(article: WikiArticle | null) {
     setPurchasedPhoto(false);
+    setPurchasedExtract(false);
     setGuessCount(0);
     setWasSkipped(false);
 
     setTimeout(() => setArticle(article), globalDefaults.transitionDuration);
+  }
+
+  function startGoogling()
+  {
+    if (isGoogling)
+    {
+      return;
+    }
+
+    setIsGoogling(true);
+
+    setTimeout(()=>{setIsGoogling(false)}, 10000);
+  }
+  
+  function startHighlight()
+  {
+    if (isHighlighting)
+    {
+      return;
+    }
+
+    setIsHighlighting(true);
+
+    setTimeout(()=>{setIsHighlighting(false)}, 10000);
   }
 
   function saveGame() {
@@ -213,15 +259,27 @@ export default function Game() {
     saveGameStateToFirebase();
   }
 
+  
+
   return (
     <>
-      <section className={`fixed top-0 left-0 w-screen h-full -z-10 pb-5 pointer-events-none transition-colors duration-300 ${wasSkipped === true ? "bg-cyan-900" : isCorrect === null ? "bg-transparent" : isCorrect ? "bg-green-800" : "bg-red-800"}`}>
+      <input type="hidden" value="HEY YOU, YEAH I KNOW WHAT YOU'RE DOING! YOU'RE CHEATING! A GOD DAMN CHEATER! I couldn't put a HTML comment tag becuase of Next.js restrictions. Also I don't care that you cheated, I had to cheat a ton while developing the game." />
+      <section className={`fixed top-0 left-0 w-screen h-full -z-10 pb-5 pointer-events-none transition-colors duration-300 ${wasSkipped === true ? "bg-cyan-900" : isCorrect === null ? "bg-transparent" : isCorrect ? "bg-green-500 dark:bg-green-800" : "bg-red-300 dark:bg-red-800"}`}>
       </section>
       <div className="flex justify-center">
         <div className="flex-col justify-center mt-2 w-screen md:w-2/3 p-10 md:p-0">
+          <Link href="/">
+            <FaHome className="text-white text-xl md:text-5xl fixed top-5 left-5" />
+          </Link>
           <h1 className="text-black dark:text-white text-bold text-2xl mb-5">Level {levelsCompleted + 1}</h1>
+
+          {
+            isGoogling && <GoogleSearchUI />
+          }
+
           <FadeTransition isTransitioning={!isTransitioning} />
           <PictureBar src={article?.originalimage?.source} purchased={purchasedPhoto} />
+          <ExtractBar purchased={purchasedExtract} extractText={article?.extract ?? ""} articleTitle={article?.normalizedtitle ?? ""} />
           <WikiPointsBar points={wikiPoints} />
           <WongoPointsBar points={wongoPoints} />
           {!!article?.normalizedtitle && (
@@ -229,7 +287,7 @@ export default function Game() {
               {
                 !isCorrect && (
                   <div className="select-none pointer-events-none text-center text-5xl mb-20">
-                    <span className="inline tracking-widest text-cyan-500">{guess}</span>
+                    <span className="inline tracking-widest text-cyan-500">{getChoppedGuess(guess, article?.normalizedtitle, isHighlighting)}</span>
                     <span className="inline tracking-widest whitespace-pre-wrap break-keep">{getChoppedPlaceholder(placeholder ?? "", guess)}</span>
                   </div>
                 )
@@ -238,7 +296,7 @@ export default function Game() {
               {
                 isCorrect && (
                   <div className="select-none pointer-events-none text-center text-5xl mb-20">
-                    <pre className="inline tracking-widest whitespace-pre-wrap break-keep text-green-300 text-bold">{article?.normalizedtitle}</pre>
+                    <pre className="inline tracking-widest whitespace-pre-wrap break-keep text-green-100 dark:text-green-300 text-bold">{article?.normalizedtitle}</pre>
                   </div>
                 )
               }
@@ -246,7 +304,7 @@ export default function Game() {
               <AnswerBox guess={guess} onAnswerAction={handleAnswerSubmit} onChangeAction={g => onGuessChange(g)} placeholder={placeholder?.split("").join(" ")} answer={article?.normalizedtitle} />
 
               <div className="flex justify-center justify-items-center mt-10">
-                <a className="hover:bg-green-600 dark:hover:bg-green-950 hover:text-white rounded-sm p-2 bg-green-300 text-black block text-center w-full md:w-1/2 lg:w-1/3 select-none hover:cursor-pointer" onClick={() => { handleAnswerSubmit(); soundManager.playSound('click'); }} onMouseEnter={() => { soundManager.playSound('hover') }}>Guess</a>
+                <a className="hover:bg-green-600 dark:hover:bg-green-950 hover:text-white rounded-sm p-2 bg-black text-white dark:text-white block text-center w-full md:w-1/2 lg:w-1/3 select-none hover:cursor-pointer" onClick={() => { handleAnswerSubmit(); soundManager.playSound('click'); }} onMouseEnter={() => { soundManager.playSound('hover') }}>Guess</a>
               </div>
 
               <WongoWhisperSection context={{
@@ -261,6 +319,10 @@ export default function Game() {
                 setPlaceholderAction: setPlaceholder,
                 setWasSkippedAction: setWasSkipped,
                 setLevelsCompletedAction: setLevelsCompleted,
+                setPurchasedExtractAction: setPurchasedExtract,
+                startGoogleSearchAction: startGoogling,
+                purchasedExtract: purchasedExtract,
+                startHighlightAction: startHighlight,
                 levelsCompleted: levelsCompleted,
                 wasSkipped: wasSkipped,
                 purchasedPhoto: purchasedPhoto,
@@ -270,12 +332,13 @@ export default function Game() {
                 setWhispersUsedAction: setWhispersUsed,
                 setWhisperCountsAction: setWhisperCounts,
                 isCorrect: isCorrect ?? false,
-                hasPhoto: !!article?.originalimage
+                hasPhoto: !!article?.originalimage,
+                hasExtract: !!article?.extract
               }} />
 
               <section>
-                <h1 className="text-black dark:text-white mt-10 select-none">Categories</h1>
-                <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 justify-center">
+                <h1 className="text-white mt-10 select-none">Categories</h1>
+                <div className="my-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 justify-center">
                   {
                     Array.isArray(article?.categories) && article?.categories?.map(c => {
                       return <CategoryTag key={c} title={c} />;

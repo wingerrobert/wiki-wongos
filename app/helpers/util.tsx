@@ -1,3 +1,4 @@
+import { JSX } from "react";
 import G from "../global"
 import { WikiArticle } from "../services/wikiservice";
 
@@ -26,9 +27,51 @@ function getLevenshteinDistance(a: string, b: string): number {
   return d[m][n];
 }
 
+export function getChoppedGuess(
+  guess: string,
+  answer: string,
+  isHighlighting: boolean
+): JSX.Element[] | string {
+  if (!isHighlighting) {
+    return guess;
+  }
+
+  const result: JSX.Element[] = [];
+
+  for (let i = 0; i < guess.length; i++) {
+    const guessChar = guess[i];
+    const answerChar = answer[i];
+
+    const isMatch =
+      sanitizeGuess(guessChar) !== "" &&
+      sanitizeGuess(guessChar) === sanitizeGuess(answerChar ?? "");
+
+    result.push(
+      <span
+        key={ i }
+        className = {`inline ${isMatch ? "text-yellow-400 font-bold" : "text-red-500"
+        }`}
+      >
+    { guessChar }
+    </span>
+    );
+}
+
+return result;
+}
+
 export function getChoppedPlaceholder(placeholder: string, guess: string) {
   return placeholder?.substring(guess.length, placeholder.length)
 }
+
+function sanitizeGuess(input: string): string {
+  return input
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Remove accents
+    .replace(/[^a-zA-Z0-9]/g, "")    // Strip symbols/punctuation
+    .toLowerCase();
+}
+
 
 // Returns between 0 -> 1, 0 being 100% dissimilar and 1 being 100% similar
 export function getAnswerCorrect(answer: string, title: string) {
@@ -40,7 +83,7 @@ export function getAnswerCorrect(answer: string, title: string) {
     return Math.round(similarityScore) > G.correctnessThreshold;
   }
 
-  return answer.toLowerCase() == title.toLowerCase();
+  return sanitizeGuess(answer) === sanitizeGuess(title);
 }
 
 export function isWikiArticle(obj: any): obj is WikiArticle {

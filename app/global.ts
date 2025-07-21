@@ -4,13 +4,15 @@ export type GameState = {
   currentPlaceholder: string;
   wikis: number;
   wongos: number;
+  forceNewGame: boolean;
   levelsCompleted: number | null;
   whispers: Record<string, number>;
   isExistingGame: boolean;
+  previousArticleIds: string[];
   volume: number;
 }
 
-export const globalDefaults = {
+const defaults = {
   maxLoopIterations: 2000,
   delayAfterAnswer: 2000,
   delayAfterSkip: 2500,
@@ -18,22 +20,26 @@ export const globalDefaults = {
   articleDaysToGrab: 10,
   firebaseArticleStorageCap: 5000,
   minimumArticles: 20,
-  startingWongos: 100,
+  startingWongos: 10,
   startingWikis: 0,
-  wikiPointsPerArticle: 3,
+  wikiPointsPerArticle: 2,
+  wongoPointsPerArticle: 3,
   startingVolume: 0,
   transitionDuration: 500,
   useLevenshteinDistance: false,
-  maxPhotoHintsPerArticle: 5,
   levelsBeforeStore: 5,
   startingWongoWhispers: {
     "whisper_reveal_letter": 50,
+    "whisper_end_game": 1
   }
 };
+
+export const globalDefaults = { ...defaults };
 
 export const initialGameState: GameState = {
   volume: 0,
   playerId: "",
+  forceNewGame: false,
   wongos: globalDefaults.startingWongos,
   wikis: globalDefaults.startingWikis,
   levelsCompleted: null,
@@ -43,7 +49,7 @@ export const initialGameState: GameState = {
   isExistingGame: false
 };
 
-export let gameState: GameState = initialGameState; 
+export let gameState: GameState = {...initialGameState}; 
 
 export function setGameState(newState: GameState)
 {

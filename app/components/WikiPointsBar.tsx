@@ -13,7 +13,7 @@ export default function WikiPointsBar({ points }: { points: number })
       !!points && points > 5 && (
         <div className="flex justify-items-center">
           <WikiPoint />
-          <h1 className="inline my-auto ml-2">x{points}</h1>
+          <h1 className="text-white inline my-auto ml-2">x{points}</h1>
         </div>      
       )
     }

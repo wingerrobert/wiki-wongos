@@ -7,7 +7,7 @@ import { loadFull } from "tsparticles";
 
 
 export default function SnowyParticles() {
-  const { theme, setTheme } = useTheme(); 
+  const theme = useTheme(); 
   const particlesInit = useCallback(async (engine: any) => {
     await loadFull(engine);
   }, []);
@@ -23,9 +23,9 @@ export default function SnowyParticles() {
         fullScreen: { enable: true, zIndex: -1 },
         particles: {
           number: { value: 120, density: { enable: true, area: 800 } },
-          color: { value: "#fff" },
+          color: { value: theme.theme === "dark" ? "#fff" : "#b3ddec" },
           shape: { type: "circle" },
-          opacity: { value: 0.2, random: true },
+          opacity: { value: theme.theme === "dark" ? 0.2 : 0.8, random: true },
           size: { value: 2, random: true },
           move: {
             enable: true,

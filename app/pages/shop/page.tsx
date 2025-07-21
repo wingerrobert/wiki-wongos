@@ -9,6 +9,7 @@ import { gameState } from "@/app/global";
 import { allWongoWhispers, WongoWhisper } from "@/app/helpers/WongoWhisperActions";
 import soundManager from "@/app/managers/soundManager";
 import gameStateService, { saveGameStateToFirebase } from "@/app/services/gameStateService";
+import { WikiArticle } from "@/app/services/wikiservice";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -40,6 +41,12 @@ export default function Shop() {
         return;
       }
 
+      const response = await fetch('/api/randomArticle');
+      const nextArticle: WikiArticle = await response.json() as WikiArticle;
+
+      gameState.currentArticleId = nextArticle.pageid;
+      gameState.currentPlaceholder = "";
+
       setWhisperCounts(gameState.whispers);
       setWikiPoints(gameState.wikis);
       setWongoPoints(gameState.wongos);
@@ -55,6 +62,7 @@ export default function Shop() {
     const newWikiPoints: number = wikiPoints - whisper.purchaseCost;
 
     if (newWikiPoints < 0) {
+      soundManager.playSound('lose');
       displayPurchaseWarningMessage();
       return;
     }
@@ -69,6 +77,8 @@ export default function Shop() {
 
     setWhisperCounts(gameState.whispers);
 
+    soundManager.playSound('win');
+
     gameState.wikis = newWikiPoints;
 
     setSuccessfulPurchase(true);
@@ -81,6 +91,7 @@ export default function Shop() {
     const newWongoPoints = wongoPoints + 10;
 
     if (newWikiPoints < 0) {
+      soundManager.playSound('lose');
       displayPurchaseWarningMessage();
       return;
     }
@@ -92,6 +103,8 @@ export default function Shop() {
     gameState.wikis = newWikiPoints;
 
     setSuccessfulPurchase(true);
+
+    soundManager.playSound('win');
 
     await saveGameStateToFirebase();
   }
@@ -132,7 +145,7 @@ export default function Shop() {
           <a
             onMouseEnter={() => soundManager.playSound("hover")}
             onClick={onExitClick}
-            className="h-12 mx-auto select-none p-3 bg-red-300 dark:bg-red-900 w-1/2 rounded-2xl cursor-pointer hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black"
+            className="h-12 mx-auto select-none text-white p-3 bg-red-500 w-1/2 rounded-2xl cursor-pointer hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black"
           >
             EXIT
           </a>
@@ -142,7 +155,11 @@ export default function Shop() {
         <div className="relative w-full">
           <div className={`p-2 rounded-xl text-white w-full bg-red-500 text-2xl text-bold absolute float ${successfulPurchase === false ? "block" : "hidden"}`}>You can't afford that!</div>
         </div>
-        <div className="grid md:grid-cols-2 mt-10 md:mt-15 outline-1 outline-white/25 p-4 rounded-2xl shadow-md">
+        
+        <h1 className="text-xl text-black dark:text-white mt-10 md:mt-20 text-left">WIKI-2-WONGO</h1>
+        <h5 className="font-extralight text-xl text-black/60 dark:text-white/60 text-left">Trade Currency for Health!</h5>
+        
+        <div className="bg-white/25 dark:bg-black/25 grid md:grid-cols-2 mt-10 md:mt-15 outline-1 outline-white/25 p-4 rounded-2xl shadow-md">
           <article className="grid grid-cols-2 w-full h-full">
             <div className="flex items-center">
               <span className="inline mx-auto mr-3">Exchange</span>
@@ -159,18 +176,19 @@ export default function Shop() {
           <a
             onMouseEnter={() => soundManager.playSound("hover")}
             onClick={() => { soundManager.playSound("click"); purchaseWikiPoints(); }}
-            className="mx-auto md:mr-0 mt-5 md:mt-0 md:ml-auto select-none p-3 bg-white dark:bg-black w-1/2 rounded-2xl cursor-pointer hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black">
+            className="mx-auto text-white md:mr-0 mt-5 md:mt-0 md:ml-auto select-none p-3 bg-black w-1/2 rounded-2xl cursor-pointer hover:bg-white hover:text-black">
             EXCHANGE
           </a>
         </div>
 
         <h1 className="text-xl text-black dark:text-white mt-10 md:mt-20 text-left">Wongo Whispers</h1>
+        <h5 className="font-extralight text-xl text-black/60 dark:text-white/60 text-left">Single-Use Hints!</h5>
 
         {
-          !!allWongoWhispers && allWongoWhispers.map(w => {
+          !!allWongoWhispers && allWongoWhispers.filter(w=>!w.special).map(w => {
             const Icon = w.icon;
             return (
-              <div key={w.id} className="grid grid-cols-1 md:grid-cols-8 gap-3 mt-5 outline-1 outline-white/25 p-5 md:p-2 rounded-2xl shadow-md mb-5">
+              <div key={w.id} className="dark:bg-black/25 bg-white/25 grid grid-cols-1 md:grid-cols-8 gap-3 mt-5 outline-1 outline-white/25 p-5 md:p-2 rounded-2xl shadow-md mb-5">
                 <Icon className="md:col-span-1 text-black dark:text-white md:my-auto mx-auto ml-0 md:ml-auto mt-5 text-4xl md:text-2xl" />
 
                 <div className="md:col-span-3 my-auto">
@@ -189,7 +207,7 @@ export default function Shop() {
                 <a
                   onMouseEnter={() => soundManager.playSound("hover")}
                   onClick={() => { soundManager.playSound("click"); purchaseWongoWhisper(w) }}
-                  className="md:col-span-2 my-auto select-none p-3 bg-white dark:bg-black rounded-2xl cursor-pointer hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black h-12">
+                  className="md:col-span-2 text-white my-auto select-none p-3 bg-black rounded-2xl cursor-pointer hover:bg-white hover:text-black h-12">
                   PURCHASE
                 </a>
 
