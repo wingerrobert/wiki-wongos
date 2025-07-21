@@ -110,8 +110,8 @@ export const allWongoWhispers: WongoWhisper[] = [
   {
     id: "whisper_reveal_letter",
     label: "Reveal Letter",
-    purchaseCost: 1,
-    purchaseQuantity: 10,
+    purchaseCost: 2,
+    purchaseQuantity: 5,
     onActivate: revealLetter,
     icon: FaA
   },
