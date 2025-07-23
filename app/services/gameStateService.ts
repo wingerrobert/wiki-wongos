@@ -1,6 +1,6 @@
 import { doc, DocumentReference, getDoc, setDoc, waitForPendingWrites } from "firebase/firestore";
 import { db } from "../firebase";
-import { GameState, gameState, globalDefaults, setGameState } from "../global";
+import { gameState, initialGameState, setGameState } from "../global";
 import { v4 as uuidv4 } from "uuid";
 import { getAuth, signInAnonymously } from "firebase/auth";
 
@@ -49,8 +49,7 @@ export async function updateGameStateFromStorage(): Promise<boolean> {
   const stateSnap = await getStateFromPlayerId();
 
   if (stateSnap?.exists()) {
-    const storedGameState = stateSnap.data() as GameState;
-    setGameState(storedGameState);
+    setGameState({ ...initialGameState, ...stateSnap.data() });
     return true;
   }
 

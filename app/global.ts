@@ -39,6 +39,7 @@ export const globalDefaults = { ...defaults };
 export const initialGameState: GameState = {
   volume: 0,
   playerId: "",
+  previousArticleIds: [],
   forceNewGame: false,
   wongos: globalDefaults.startingWongos,
   wikis: globalDefaults.startingWikis,
