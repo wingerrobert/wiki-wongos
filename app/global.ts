@@ -26,7 +26,10 @@ const defaults = {
   wongoPointsPerArticle: 3,
   startingVolume: 0,
   transitionDuration: 500,
+  articleLimit: 500,
+  randomWhispersAvailableInShop: 2,
   useLevenshteinDistance: false,
+  wikiForWongoExchangeRate: 3,
   levelsBeforeStore: 5,
   startingWongoWhispers: {
     "whisper_reveal_letter": 50,

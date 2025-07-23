@@ -1,6 +1,6 @@
 "use client";
 
-import G, { gameState, globalDefaults } from "../../global";
+import G, { gameState, globalDefaults, initialGameState, setGameState } from "../../global";
 import { useEffect, useRef, useState } from 'react';
 import CategoryTag from '../../components/CategoryTag';
 import AnswerBox from '../../components/AnswerBox';
@@ -8,8 +8,8 @@ import { makePlaceholderText, getChoppedPlaceholder, getAnswerCorrect, getChoppe
 import WongoPointsBar from "../../components/WongoPointsBar";
 import { useRouter } from "next/navigation";
 import WikiPointsBar from "../../components/WikiPointsBar";
-import { WikiArticle } from "../../services/wikiservice";
-import gameStateService, { saveGameStateToFirebase } from "@/app/services/gameStateService";
+import { initializeWikiService, WikiArticle } from "../../services/wikiservice";
+import gameStateService, { initializePlayerDocument, saveGameStateToFirebase } from "@/app/services/gameStateService";
 import WongoWhisperSection from "@/app/components/WongoWhisperSection";
 import ArticleSkeleton from "@/app/components/ArticleSkeleton";
 import PictureBar from "@/app/components/PictureBar";
@@ -65,11 +65,14 @@ export default function Game() {
         if (!gameState.forceNewGame) {
           await gameStateService.updateGameStateFromStorage();
         }
-        
+
         gameState.forceNewGame = false;
         const isNewGame = !gameState.isExistingGame || !gameState.currentArticleId;
 
         if (isNewGame) {
+          setGameState(initialGameState);
+          await initializePlayerDocument();
+          console.log("gameState: ", gameState);
           gameState.isExistingGame = true;
           await retrieveAndUpdateRandomArticle();
           return;
@@ -94,15 +97,18 @@ export default function Game() {
     })();
   }, []);
 
+
   useEffect(() => {
-    if (article?.normalizedtitle) {
+    if (article?.normalizedtitle && article.pageid) {
+      const alreadyIncluded = gameState.previousArticleIds?.includes(article.pageid);
+      const updatedIds = alreadyIncluded
+        ? gameState.previousArticleIds
+        : [...gameState.previousArticleIds, article.pageid];
 
-      if (!!gameState && !gameState.previousArticleIds)
-      {
-        gameState.previousArticleIds = [];
-      }
+      setGameState({ ...gameState, previousArticleIds: updatedIds });
 
-      gameState?.previousArticleIds?.push(article.pageid);
+      saveGameStateToFirebase();
+
       setWhispersUsed(0);
       const newPlaceholder = makePlaceholderText(article.normalizedtitle, "");
       setIsTransitioning(false);
@@ -167,14 +173,14 @@ export default function Game() {
       })
     });
 
-    const response = await fetch('/api/randomArticle');
+    const response = await fetch(`/api/randomArticle?playerId=${gameState.playerId}`);
     const nextArticle: WikiArticle = await response.json();
 
     chooseNextArticleWithBuffer(nextArticle);
   }
 
   async function retrieveAndUpdateRandomArticle() {
-    const response = await fetch('/api/randomArticle');
+    const response = await fetch(`/api/randomArticle?playerId=${gameState.playerId}`);
     const nextArticle: WikiArticle = await response.json() as WikiArticle;
 
     chooseNextArticleWithBuffer(nextArticle);
@@ -225,28 +231,24 @@ export default function Game() {
     setTimeout(() => setArticle(article), globalDefaults.transitionDuration);
   }
 
-  function startGoogling()
-  {
-    if (isGoogling)
-    {
+  function startGoogling() {
+    if (isGoogling) {
       return;
     }
 
     setIsGoogling(true);
 
-    setTimeout(()=>{setIsGoogling(false)}, 10000);
+    setTimeout(() => { setIsGoogling(false) }, 10000);
   }
-  
-  function startHighlight()
-  {
-    if (isHighlighting)
-    {
+
+  function startHighlight() {
+    if (isHighlighting) {
       return;
     }
 
     setIsHighlighting(true);
 
-    setTimeout(()=>{setIsHighlighting(false)}, 10000);
+    setTimeout(() => { setIsHighlighting(false) }, 10000);
   }
 
   function saveGame() {
@@ -259,7 +261,7 @@ export default function Game() {
     saveGameStateToFirebase();
   }
 
-  
+
 
   return (
     <>

@@ -17,7 +17,7 @@ function getPlayerDocRef(): DocumentReference {
   return doc(db, "gamestate", gameState.playerId);
 }
 
-async function initializePlayerDocument() {
+export async function initializePlayerDocument() {
   if (!isBrowser()) {
     return;
   }
@@ -47,9 +47,10 @@ export async function updateGameStateFromStorage(): Promise<boolean> {
   await waitForPendingWrites(db);
   
   const stateSnap = await getStateFromPlayerId();
+  const state = stateSnap?.data();
 
   if (stateSnap?.exists()) {
-    setGameState({ ...initialGameState, ...stateSnap.data() });
+    setGameState({ ...initialGameState, ...state, previousArticleIds: state?.previousArticleIds ?? []});
     return true;
   }
 
@@ -73,7 +74,7 @@ export async function saveGameStateToFirebase() {
   await setDoc(stateRef, gameState);
 }
 
-async function getStateFromPlayerId() {
+export async function getStateFromPlayerId() {
   if (!isBrowser()) {
     return null;
   }
@@ -91,7 +92,7 @@ async function getStateFromPlayerId() {
     throw new Error("Player ID is not set.");
   }
 
-  gameState.playerId = playerId; // Ensure global state is synced
+  gameState.playerId = playerId;
   const stateRef = getPlayerDocRef();
   return await getDoc(stateRef);
 }

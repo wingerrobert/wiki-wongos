@@ -14,7 +14,7 @@ export default function WongoWhisperSection({ context }: WongoWhisperSectionProp
     <section className="mt-5">
       {
         whispers && whispers.filter(w => { 
-          !w.special && Object.values(context.whisperCounts).some(wc => wc > 0); 
+          return !w.hideInShop && Object.values(context.whisperCounts).some(wc => wc > 0); 
         }).length > 0 &&
           <h1 className="text-black dark:text-white select-none">Wongo Whispers</h1>
       }
@@ -23,7 +23,7 @@ export default function WongoWhisperSection({ context }: WongoWhisperSectionProp
           whispers && whispers.filter(w => {
             const isGiveUp = w.id === 'whisper_end_game';
             const allOthersZero = Object.entries(context.whisperCounts)
-              .filter(([id]) => id !== 'whisper_end_game' && id !== "whisper_buy_photo" && id !== "whisper_show_extract")
+              .filter(([id]) => id !== 'whisper_end_game' && id !== "whisper_buy_picture" && id !== "whisper_show_extract" && id !== "whisper_wiki_for_wongo")
               .every(([, count]) => count === 0);
 
             if (isGiveUp) {
@@ -45,9 +45,8 @@ export default function WongoWhisperSection({ context }: WongoWhisperSectionProp
         {
           whispers && whispers
             .filter(w => {
-              return context.whisperCounts[w.id] > 0 && !w.special;
+              return context.whisperCounts[w.id] !== undefined && !w.hideInShop && !w.hideInGame;
             })
-
             .map(w => {
               const Icon = w.icon;
               return (

@@ -1,7 +1,7 @@
 import { revealSingleLetterInPlaceholder, revealWordInPlaceholder } from "./util";
-import { FaA, FaArrowRight, FaFile, FaGoogle, FaHighlighter, FaPhotoFilm, FaW } from "react-icons/fa6";
+import { FaA, FaArrowRight, FaFile, FaGoogle, FaHighlighter, FaPhotoFilm, FaW, FaWikipediaW } from "react-icons/fa6";
 import { IconType } from "react-icons";
-import { gameState } from "../global";
+import globalDefaults, { gameState } from "../global";
 import { FaSignOutAlt } from "react-icons/fa";
 
 export type WongoWhisper = {
@@ -13,7 +13,9 @@ export type WongoWhisper = {
   description?: string,
   onActivate: (whisper: WongoWhisper, context: WongoWhisperContext) => void;
   icon: IconType;
-  special?: boolean; // shouldn't show up in shop e.g. the give up whisper only shows up when you're out of other whispers
+  alwaysAvailableInShop?: boolean;
+  hideInShop?: boolean;
+  hideInGame?: boolean; 
 }
 
 export type WongoWhisperContext = {
@@ -155,6 +157,7 @@ function startHighlight(whisper: WongoWhisper, context: WongoWhisperContext) {
 
 export const allWongoWhispers: WongoWhisper[] = [
   {
+    alwaysAvailableInShop: true,
     id: "whisper_reveal_letter",
     difficultyWeight: 1,
     label: "Reveal Letter",
@@ -206,7 +209,8 @@ export const allWongoWhispers: WongoWhisper[] = [
   {
     id: "whisper_end_game",
     difficultyWeight: 0,
-    special: true,
+    hideInShop: true,
+    hideInGame: true,
     label: "Forfeit",
     description: "It's all over man!",
     purchaseCost: 0,
@@ -233,5 +237,17 @@ export const allWongoWhispers: WongoWhisper[] = [
     purchaseQuantity: 5,
     onActivate: startHighlight,
     icon: FaHighlighter
+  },
+  {
+    alwaysAvailableInShop: true,
+    id: "whisper_wiki_for_wongo",
+    difficultyWeight: 0,
+    label: "Wiki-4-Wongo",
+    description: `Trade in a wiki point (currency) for ${globalDefaults.wikiForWongoExchangeRate} wongos (health)`,
+    purchaseCost: 1,
+    hideInGame: true,
+    purchaseQuantity: 1,
+    onActivate: ()=>{},
+    icon: FaWikipediaW
   }
 ]
