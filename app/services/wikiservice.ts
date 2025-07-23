@@ -30,27 +30,29 @@ export type Category = {
   title: string;
 };
 
-const ARTICLE_DIFFICULTY_THRESHOLD = 0.2;
-const MAX_ARTICLE_DIFFICULTY = 1 - ARTICLE_DIFFICULTY_THRESHOLD;
-const MIN_ARTICLE_DIFFICULTY = ARTICLE_DIFFICULTY_THRESHOLD;
+const ARTICLE_DIFFICULTY_THRESHOLD = 0.05;
 
 const MAX_GUESS_THRESHOLD = 30; // used to calculate difficulty. Basically an estimate for the number of guesses for a very hard question.
 const WHISPER_WEIGHT = 0.8; // how much the whispers weigh into the equation
 
-let allArticles : WikiArticle[];
+let allArticles: WikiArticle[];
 
-export async function initializeWikiService()
-{
+export async function initializeWikiService() {
   const snapshot = await adminDb.collection("articles").limit(globalDefaults.articleLimit).get();
   allArticles = snapshot.docs.map(doc => doc.data() as WikiArticle);
 }
 
 export async function updateArticleDifficulty(articleId: string, articleGuesses: number, whispersUsed: number) {
   try {
-    const article = allArticles.filter(a => a.pageid === articleId)[0];
+    if (!allArticles) {
+      await initializeWikiService();
+    }
 
-    if (!article)
-    {
+    const article = allArticles.filter(
+      a => String(a.pageid).trim() === String(articleId).trim()
+    )[0];
+
+    if (!article) {
       console.error("Error updating article difficulty: Page was not found in all pages");
       return;
     }
@@ -75,21 +77,31 @@ export async function updateArticleDifficulty(articleId: string, articleGuesses:
 }
 
 function getNormalizedDifficulty() {
+  const difficulties = allArticles
+    .map(a => a.difficulty)
+    .filter((d): d is number => typeof d === "number");
+
+  if (difficulties.length === 0) {
+    return [0, 1]; 
+  }
+
+  const minDifficulty = Math.min(...difficulties);
+  const maxDifficulty = Math.max(...difficulties);
+
   const clampedLevel = Math.min(100, Math.max(0, gameState.levelsCompleted ?? 0));
   const normalizedProgress = clampedLevel / 100;
-  const targetDifficulty = MIN_ARTICLE_DIFFICULTY + normalizedProgress * (MAX_ARTICLE_DIFFICULTY - MIN_ARTICLE_DIFFICULTY);
+  const targetDifficulty = minDifficulty + normalizedProgress * (maxDifficulty - minDifficulty);
 
-  const lowerBound = Math.max(0, targetDifficulty - ARTICLE_DIFFICULTY_THRESHOLD);
-  const upperBound = Math.min(1, targetDifficulty + ARTICLE_DIFFICULTY_THRESHOLD);
+  const lowerBound = Math.max(minDifficulty, targetDifficulty - ARTICLE_DIFFICULTY_THRESHOLD);
+  const upperBound = Math.min(maxDifficulty, targetDifficulty + ARTICLE_DIFFICULTY_THRESHOLD);
 
   return [lowerBound, upperBound];
 }
 
 
-export async function getRandomArticle(excludedIds: string[]): Promise<WikiArticle | null> {
-  
-  if (!allArticles)
-  {
+export async function getRandomArticle(): Promise<WikiArticle | null> {
+
+  if (!allArticles) {
     await initializeWikiService();
   }
 
@@ -97,10 +109,13 @@ export async function getRandomArticle(excludedIds: string[]): Promise<WikiArtic
 
   try {
     // query articles within difficulty range
-    let articlesPool = allArticles.filter(a => !!a.difficulty && a.difficulty >= lowerBound && a.difficulty <= upperBound);
+    let articlesPool = allArticles.filter(
+      a => typeof a.difficulty === "number" && a.difficulty >= lowerBound && a.difficulty <= upperBound
+    );
 
     // If no articles found, try articles with missing difficulty
     if (articlesPool.length === 0) {
+      console.log("No Articles within target difficulty range");
       const fallbackPool = allArticles.filter(a => !a.difficulty);
 
       articlesPool = fallbackPool;
@@ -108,6 +123,7 @@ export async function getRandomArticle(excludedIds: string[]): Promise<WikiArtic
 
     // Final fallback: random pick from whole collection
     if (articlesPool.length === 0) {
+      console.log("No articles with or without difficulty range")
       articlesPool = allArticles;
     }
 
@@ -119,11 +135,4 @@ export async function getRandomArticle(excludedIds: string[]): Promise<WikiArtic
     console.warn("Error retrieving article:", e);
     return null;
   }
-}
-
-function filterOutPreviousArticles(articlesPool: QueryDocumentSnapshot<DocumentData, DocumentData>[], excludedIds: string[]) {
-  const previousArticles = excludedIds;
-  return articlesPool.filter(doc => {
-    return !previousArticles.includes(doc.id);
-  });
 }

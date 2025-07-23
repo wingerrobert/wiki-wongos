@@ -140,6 +140,8 @@ export default function Shop() {
   function onExitClick() {
     soundManager.playSound("click");
 
+    gameState.justLeftShop = true;
+
     gameState.currentArticleId = "";
     gameState.currentPlaceholder = "";
 

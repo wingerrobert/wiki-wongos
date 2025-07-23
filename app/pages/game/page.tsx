@@ -62,6 +62,16 @@ export default function Game() {
 
     (async () => {
       try {
+        if (levelsCompleted !== 0 && levelsCompleted % globalDefaults.levelsBeforeStore === 0 && !gameState.justLeftShop)
+        {
+          return;
+        }
+
+        if (gameState.justLeftShop)
+        {
+          gameState.justLeftShop = false;
+        }
+
         if (!gameState.forceNewGame) {
           await gameStateService.updateGameStateFromStorage();
         }
@@ -157,7 +167,7 @@ export default function Game() {
   async function handlePostAnswer() {
     saveGame();
 
-    if ((levelsCompleted + 1) !== 0 && (levelsCompleted + 1) % 5 === 0) {
+    if ((levelsCompleted + 1) !== 0 && (levelsCompleted + 1) % globalDefaults.levelsBeforeStore === 0) {
       setTimeout(() => { router.push("/pages/shop"); }, 500);
     }
 

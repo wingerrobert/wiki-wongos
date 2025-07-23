@@ -9,6 +9,7 @@ export type GameState = {
   whispers: Record<string, number>;
   isExistingGame: boolean;
   previousArticleIds: string[];
+  justLeftShop: boolean;
   volume: number;
 }
 
@@ -42,6 +43,7 @@ export const globalDefaults = { ...defaults };
 export const initialGameState: GameState = {
   volume: 0,
   playerId: "",
+  justLeftShop: false,
   previousArticleIds: [],
   forceNewGame: false,
   wongos: globalDefaults.startingWongos,

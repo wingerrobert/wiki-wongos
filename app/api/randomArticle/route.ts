@@ -13,17 +13,8 @@ export async function GET(request: Request) {
   }
 
   try {
-    // Use Firebase Admin SDK to bypass Firestore rules
-    const stateSnap = await adminDb.collection("gamestate").doc(playerId).get();
-
-    const serverGameState = {
-      ...initialGameState,
-      ...stateSnap.data(),
-      previousArticleIds: stateSnap.data()?.previousArticleIds ?? [],
-    };
-
     // Pass hydrated state to the wiki service
-    const article = await wikiservice.getRandomArticle(serverGameState.previousArticleIds);
+    const article = await wikiservice.getRandomArticle();
 
     if (!article) {
       console.error("No article returned");
