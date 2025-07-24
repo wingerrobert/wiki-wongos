@@ -30,7 +30,7 @@ export type Category = {
   title: string;
 };
 
-const ARTICLE_DIFFICULTY_THRESHOLD = 0.05;
+const ARTICLE_DIFFICULTY_THRESHOLD = 0.3;
 
 const MAX_GUESS_THRESHOLD = 30; // used to calculate difficulty. Basically an estimate for the number of guesses for a very hard question.
 const WHISPER_WEIGHT = 0.8; // how much the whispers weigh into the equation
@@ -107,23 +107,25 @@ export async function getRandomArticle(): Promise<WikiArticle | null> {
 
   const [lowerBound, upperBound] = getNormalizedDifficulty();
 
+  console.log(allArticles.map(a=>a.pageid));
+
   try {
     // query articles within difficulty range
     let articlesPool = allArticles.filter(
-      a => typeof a.difficulty === "number" && a.difficulty >= lowerBound && a.difficulty <= upperBound
+      a => typeof a.difficulty === "number" && a.difficulty >= lowerBound && a.difficulty <= upperBound && !gameState.previousArticleIds.includes(a.pageid)
     );
 
     // If no articles found, try articles with missing difficulty
     if (articlesPool.length === 0) {
-      console.log("No Articles within target difficulty range");
-      const fallbackPool = allArticles.filter(a => !a.difficulty);
+      console.warn("No Articles within target difficulty range");
+      const fallbackPool = allArticles.filter(a => !a.difficulty && !gameState.previousArticleIds.includes(a.pageid));
 
       articlesPool = fallbackPool;
     }
 
     // Final fallback: random pick from whole collection
     if (articlesPool.length === 0) {
-      console.log("No articles with or without difficulty range")
+      console.warn("No articles with or without difficulty range")
       articlesPool = allArticles;
     }
 
